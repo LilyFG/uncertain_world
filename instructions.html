@@ -1,0 +1,158 @@
+<!doctype html>
+<meta charset="UTF-8">
+<html>
+<head>
+  <title>Buttons</title>
+  <script src="js/jquery.min.js"></script>
+  <!-- Make sure that these paths direct to the files correctly -->
+  <script src="js/jspsych.js"></script>
+  <script src="js/webcam.js"></script>
+  <script src="https://www.webrtc-experiment.com/common.js"></script>
+  <link rel="stylesheet" href="css/jspsych.css"></link>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat|Open+Sans" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Squada+One&display=swap" rel="stylesheet">
+  <style>
+
+  #jspsych-target {
+    background-color: #287e87;
+  }
+
+  #jspsych-content-wrapper {
+    width: 100vw;
+  }
+
+  #jspsych-content {
+    width: 100vw;
+  }
+
+/* #jspsych-html-button-response-stimulus {
+  justify-content: center;
+} */
+  /* #jspsych-html-button-response-btngroup {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-column-gap: 10px;
+    grid-row-gap: 10px;
+    padding: 40px;
+    background-color: #ccccc2;
+    border-style: double;
+    border-color: #70706f;
+    border-width: 10px;
+  } */
+
+
+  .uw-rating {background-color: white; filter: brightness(75%)}
+
+  #uw-rate1 {
+    background-color: #ff0505;
+        }
+  #uw-rate2 {
+    background-color: #ff5b00;
+        }
+  #uw-rate3 {
+    background-color: #ff8f00;
+        }
+  #uw-rate4 {
+    background-color: #ffc302;
+        }
+  #uw-rate5 {
+    background-color: #fff600;
+        }
+
+    .uw-rating:hover {filter: brightness(100%)}
+    .uw-rating-box:hover > .uw-rating {filter: brightness(100%)}
+
+
+
+    #jspsych-audio-button-response-btngroup {
+      width: 900px;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-column-gap: 6px;
+      grid-row-gap: 15px;
+      padding: 40px;
+      margin: auto;
+      background-color: #ccccc2;
+      border-style: double;
+      border-color: #70706f;
+      border-width: 10px;
+    }
+
+    .uw-btn {
+      display: inline-block;
+      margin: 0px;
+      padding: 0px;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      outline: none;
+      color: #fff;
+      background-color: #4CAF50;
+      border: none;
+      box-shadow: 0 9px #999;
+    }
+
+    .uw-btn:active {
+      background-color: #3e8e41;
+      box-shadow: 0 5px #666;
+      transform: translateY(4px);
+    }
+
+  .uw-btn.certain.neutral{
+    background-color:#198e8e;
+  }
+
+  .uw-btn.certain.negative{
+    background-color:#073a3d;
+  }
+
+  .uw-btn.uncertain{
+    background-color:#136664;
+  }
+
+.console{
+  position: relative;
+  margin: auto;
+  margin-bottom: 30px;
+  width: 60%;
+  background-color: #646669;
+  border-width: 3px;
+  border-radius: 8px;
+  padding: 20px;
+  color: #aee352;
+  font-family: 'Squada One', cursive;
+  font-size: 25px;
+}
+
+
+  </style>
+  </head>
+
+  <body style="min-height: 100vh;">
+    <div id="jspsych-target" style="min-height: 100vh; width: 100%; margin: auto;">
+      <!-- <img src='img/star.png' style='position: absolute; height: 3vh; left: 20%; top: 30%;'>
+      <img src='img/star.png' style='position: absolute; height: 2vh; left: 30%; top: 40%;'>
+      <img src='img/star.png' style='position: absolute; height: 2vh; left: 40%; top: 35%;'>
+      <img src='img/star.png' style='position: absolute; height: 1vh; left: 50%; top: 25%;'>
+      <img src='img/star.png' style='position: absolute; height: 2vh; left: 60%; top: 30%;'>
+      <img src='img/star.png' style='position: absolute; height: 3vh; left: 70%; top: 35%;'>
+      <img src='img/star.png' style='position: absolute; height: 3vh; left: 80%; top: 25%;'>
+      <div style='font-family: Montserrat; font-size: 4vh; font-weight: 600; text-align: center; color: black; background-color: white; width: 100%; position: fixed; top: 70%; left: 50%; transform: translate(-50%, 50%);'>Let's get ready for your space flight!</div> -->
+
+    <div id="ratings" style="width: 60%; height: 10%; margin: auto; display: flex; flex-direction: row-reverse; position: fixed; top: 5;">
+      <button id="uw-rate1" class="uw-rating" style="flex-grow: 1;"></button>
+      <button id="uw-rate2" class="uw-rating" style="flex-grow: 1;"></button>
+      <button id="uw-rate3" class="uw-rating" style="flex-grow: 1;"></button>
+      <button id="uw-rate4" class="uw-rating" style="flex-grow: 1;"></button>
+      <button id="uw-rate5" class="uw-rating" style="flex-grow: 1;"></button>
+    </div>
+
+
+
+    </div>
+  </body>
+  </html>

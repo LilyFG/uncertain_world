@@ -1,0 +1,23 @@
+<html>
+
+<head>
+  <script src="js/jspsych.js"></script>
+  <script src="js/jquery.min.js"></script>
+
+</head>
+
+<body>
+  <div> Here is a random id to assign to a participant: </div>
+<form action="process.php" method="POST">
+  <div id="random_number"></div>
+  <input type="hidden" id="hidden_id" name="id">
+	<input type="submit" value="Accept">
+</form>
+  <script>
+    var id = jsPsych.randomization.randomID(5)
+    document.getElementById("random_number").innerHTML = id
+    document.getElementById("hidden_id").value = id
+
+  </script>
+
+</html>
