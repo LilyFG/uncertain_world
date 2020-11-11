@@ -1664,11 +1664,12 @@
     },
     on_trial_finish: function() {
       window.scrollTo(0, 0);
-      saveData(task_name + "_" + id + ".csv", jsPsych.data.get().csv());
+      saveData(task_name + "_" + id + "_" + jsPsych.startTime() + ".csv", jsPsych.data.get().csv());
       synth.cancel(); // after every trial, cancel the speech and pause any audio that's playing
       if(audio) {audio.pause()};
       jsPsych.data.addProperties({
-        interactions: JSON.stringify(interactions)
+        interactions: JSON.stringify(interactions),
+        start_time: jsPsych.startTime()
       });
     },
     on_finish: function() {
