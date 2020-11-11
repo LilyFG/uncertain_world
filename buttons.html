@@ -1375,7 +1375,37 @@
         }
       },
     ]),
-    post_trial_gap: 500
+    post_trial_gap: 500,
+    on_finish: function(data) {
+      data.trialN = trialN
+      var rating_score;
+      var rating_text;
+      switch(data.button_pressed){
+        case "0":
+          rating_score = 5;
+          rating_text = "very happy"
+          break;
+        case "1":
+          rating_score = 4;
+          rating_text = "happy"
+          break;
+        case "2":
+          rating_score = 3;
+          rating_text = "neutral"
+          break;
+        case "3":
+          rating_score = 2;
+          rating_text = "unhappy"
+          break;
+        case "4":
+          rating_score = 1;
+          rating_text = "very unhappy"
+          break;
+      }
+      data.rating_text = rating_text;
+      data.rating_score = rating_score;
+    },
+    data: {name: "sound_rating"}
   }
 
   var thank_you = {
