@@ -91,20 +91,6 @@
   }
 
 
-  // function for retrieving data from the browser string,
-  //can be really useful for carrying participant number from recruitment site into script
-  function getQueryVariable(variable) {
-    var query = window.location.search.substring(1);
-    var vars = query.split("&");
-    for (var i = 0; i < vars.length; i++) {
-      var pair = vars[i].split("=");
-      if (pair[0] == variable) {
-        return pair[1];
-      }
-    }
-    return (false);
-  }
-
 
   // function to play buffered sounds (e.g. example sounds in practice routines)
   function play_sound(sound, time) {
@@ -332,7 +318,8 @@
           console.log(localMediaStream)
           localMediaStream.getVideoTracks()[0].stop()
           jsPsych.finishTrial({
-            permissions: 'accepted'
+            permissions: 'accepted',
+            browser: navigator.userAgent
           })
         },
         function() {
