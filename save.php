@@ -3,6 +3,8 @@
 // MIT License   - https://www.webrtc-experiment.com/licence/
 // Documentation - https://github.com/muaz-khan/RecordRTC
 
+ob_start();
+
 header("Access-Control-Allow-Origin: *");
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -10,7 +12,7 @@ ini_set('display_errors', 1);
 set_error_handler("someFunction");
 
 function someFunction($errno, $errstr) {
-    echo '<h2>Upload failed.</h2><br>';
+    echo '<h2>Error message.</h2><br>';
     echo '<p>'.$errstr.'</p>';
 }
 
@@ -63,21 +65,23 @@ function selfInvoker()
         return;
     }
 
-    /*
-    $upload_max_filesize = return_bytes(ini_get('upload_max_filesize'));
+    
+    // $upload_max_filesize = return_bytes(ini_get('upload_max_filesize'));
 
-    if ($_FILES[$file_idx]['size'] > $upload_max_filesize) {
-       echo 'upload_max_filesize exceeded.';
-       return;
-    }
+    // if ($_FILES[$file_idx]['size'] > $upload_max_filesize) {
+    //   echo 'upload_max_filesize exceeded.';
+    //   error_log('upload_max_filesize exceeded.', 3, 'video.log');
+    //   return;
+    // }
 
-    $post_max_size = return_bytes(ini_get('post_max_size'));
+    // $post_max_size = return_bytes(ini_get('post_max_size'));
 
-    if ($_FILES[$file_idx]['size'] > $post_max_size) {
-       echo 'post_max_size exceeded.';
-       return;
-    }
-    */
+    // if ($_FILES[$file_idx]['size'] > $post_max_size) {
+    //   echo 'post_max_size exceeded.';
+    //   error_log('post_max_size exceeded.', 3, 'video.log');
+    //   return;
+    // }
+    
 
     $filePath = '../../uploads/' . $fileName;
 
@@ -114,15 +118,33 @@ function selfInvoker()
             }
             else {
                 echo 'Not uploaded because of error #'.$_FILES["file"]["error"];
+
             }
         }
         else {
             echo 'Problem saving file: '.$tempName;
         }
+        
+        // print into log
+        echo date("Y-m-d h:i:sa"." ");
+        echo $fileName;
+        echo ' failure';
+        $myfile = fopen("video_log.txt", "a") or die("Unable to open file!");
+        $html_string = ob_get_contents();
+        ob_end_clean();
+        fwrite($myfile, $html_string);
+        fclose($myfile);
+        
         return;
     }
-
-    echo 'success';
+    echo date("Y-m-d h:i:sa"." ");
+    echo $fileName;
+    echo ' success';
+    $myfile = fopen("video_log.txt", "a") or die("Unable to open file!");
+    $html_string = ob_get_contents();
+    ob_end_clean();
+    fwrite($myfile, $html_string . "\n");
+    fclose($myfile);
 }
 
 /*
