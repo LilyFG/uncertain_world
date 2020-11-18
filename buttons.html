@@ -101,7 +101,7 @@
       col: colno,
       error: error
     });
-    saveData("error_log_" + task_name + "_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
+    saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
   };
 
 
