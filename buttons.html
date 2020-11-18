@@ -77,6 +77,8 @@
   var assent_given = false; // assent has not been given yet
 
   var interactions = [] // an empty array to house information about screen interactions
+  
+  var error_log = [] // empty array to hold error messages
   /// -------------------------FUNCTIONS FOR TRIAL SPECIFICATION---------------------------------///
   function saveData(filename, filedata) {
     $.ajax({
@@ -89,6 +91,18 @@
       }
     });
   }
+  
+  // log errors to a file
+  window.onerror = function(message, source, lineno, colno, error) {
+    error_log = error_log.push({
+      message: message,
+      source: source,
+      line: lineno,
+      col: colno,
+      error: error
+    }
+    save_data(error_log_task_name + "_" + id + "_" + jsPsych.startTime() + ".csv", JSON.stringify(error_log);
+  };
 
 
 
