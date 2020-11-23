@@ -77,7 +77,7 @@
   var assent_given = false; // assent has not been given yet
 
   var interactions = [] // an empty array to house information about screen interactions
-  
+
   var error_log = [] // empty array to hold error messages
   /// -------------------------FUNCTIONS FOR TRIAL SPECIFICATION---------------------------------///
   function saveData(filename, filedata) {
@@ -91,7 +91,19 @@
       }
     });
   }
-  
+
+  // log errors to a file
+  window.onerror = function(message, source, lineno, colno, error) {
+    error_log.push({
+      message: message,
+      source: source,
+      line: lineno,
+      col: colno,
+      error: error
+    });
+    saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
+  };
+
   // log errors to a file
   window.onerror = function(message, source, lineno, colno, error) {
     error_log.push({
@@ -874,7 +886,7 @@
         buttons_start_time = Date.now()
         var timer = setTimeout(function() {
           timeout = true;
-          blob = stop_recording(videoStorage, "pressing_"+trialN);
+          stop_recording(videoStorage, "pressing_"+trialN);
           if (jsPsych.currentTrial().data.name == "selection") {
             skip = true;
             console.log("timer ended");
@@ -882,13 +894,23 @@
           }
         }, t_to_timeout);
       }
+    },
+    data: {
+        name: set_timer
     }
   }
 
   var trial_start = {
     type: 'html-keyboard-response',
+    on_start: function(){
+      if(timeout){
+          timeout = false
+          trialN++
+      }
+    },
     stimulus: function() {
-      return "<div class='console'>Round " + (trialN + 1) + " of 4</div>"
+        console.log("set stim")
+      return "<div class='console'>Round " + (jsPsych.data.get().filter({name: "trial_start"}).values().length + 1) + " of 4</div>"
     },
     choices: jsPsych.NO_KEYS,
     on_load: function() {
@@ -1201,7 +1223,7 @@
     },
     margin_horizontal: '0px',
     on_finish: function(data) {
-      if ((t_to_timeout - (Date.now() - buttons_start_time)) < 0) {
+      if (timeout) {
         console.log("end timeline in trial")
         jsPsych.endCurrentTimeline()
         skip = true
@@ -1211,8 +1233,9 @@
         data.label = trials[trialN].button_attr[data.button_pressed].label
         data.type = trials[trialN].button_attr[data.button_pressed].type
         data.negative = trials[trialN].button_attr[data.button_pressed].negative
-        data.trialN = trialN
       }
+      data.timeout = timeout
+      data.trialN = trialN
       return data
     },
     trial_duration: function() {
@@ -1243,9 +1266,9 @@
     margin_horizontal: '0px',
     on_load: function() {
       $("#jspsych-audio-button-response-btngroup").addClass('btn-grid')
-      $('.uw-btn').css('pointer-events', 'none');
+      $('.uw-btn').css('pointer-events', 'none'); // disable button pressing
     },
-    response_ends_trial: false,
+    response_ends_trial: false, // button responses do not end trial
     trial_ends_after_audio: true,
     data: {
       name: "sound"
@@ -1255,7 +1278,7 @@
   var sound_conditional = {
       timeline: [sound],
       conditional_function: function() {
-        if (skip | !jsPsych.data.get().last().values()[0].button_pressed) { // if the trial is over, or for some reason the selection trial finished without button pressing
+        if (skip | !jsPsych.data.get().last().values()[0].button_pressed) { // if the trial is over or the selection trial finished without button pressing
           return false
         }else{
           return true
@@ -1263,10 +1286,9 @@
       }
     }
 
-  var box_selection_proc = [selection, sound_conditional]
 
   var loop = {
-    timeline: box_selection_proc,
+    timeline: [selection, sound_conditional],
     loop_function: function(data) {
       if (timeout == false) {
         return true;
@@ -1279,9 +1301,7 @@
   var trial_loop = {
     timeline: [ spaceship_cam, trial_start, baseline, anticipation, ratings_emo, ratings_worry, ratings_uncer, buttons_active, set_timer, loop],
     loop_function: function(data) {
-      trialN++
-      if (trialN < 4) {
-        timeout = false
+      if (trialN < 3) {
         return true;
       } else {
         return false;
