@@ -45,7 +45,7 @@ var vo_txt = {
     "and if you don’t want to play, press the red button.",
   // at the start of each round
   begin_round: "This round is about to begin. "+
-    "Please sit still and look at the buttons. Please don't press any buttons at this point",
+    "Please look at the buttons. Please don't press any buttons at this point",
   // emotion rating
   sam_rate: "How happy or unhappy "+
     "are you about pressing the buttons on this round? "+
