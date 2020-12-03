@@ -878,33 +878,12 @@
   }
 
 
-  var set_timer = {
-    type: 'call-function',
-    func: function() {
-      skip = false
-      if (timeout == false) {
-        buttons_start_time = Date.now()
-        var timer = setTimeout(function() {
-          timeout = true;
-          stop_recording(videoStorage, "pressing_"+trialN);
-          if (jsPsych.currentTrial().data.name == "selection") {
-            skip = true;
-            console.log("timer ended");
-            jsPsych.endCurrentTimeline();
-          }
-        }, t_to_timeout);
-      }
-    },
-    data: {
-        name: set_timer
-    }
-  }
-
   var trial_start = {
     type: 'html-keyboard-response',
     on_start: function(){
       if(timeout){
           timeout = false
+          skip = false
           trialN++
       }
     },
@@ -1197,6 +1176,7 @@
     on_finish: function(data) {
       data.trialN = trialN
       start_recording()
+      buttons_start_time = Date.now()
     },
     post_trial_gap: 0,
     data: {
@@ -1223,9 +1203,8 @@
     },
     margin_horizontal: '0px',
     on_finish: function(data) {
-      if (timeout) {
-        console.log("end timeline in trial")
-        jsPsych.endCurrentTimeline()
+      if (t_to_timeout <= (Date.now() - buttons_start_time)) {
+        timeout = true
         skip = true
       }
       if (data.button_pressed) {
@@ -1243,7 +1222,7 @@
     }, // calculate how much of the time limit is left and end the trial if passed
     data: {
       name: "selection"
-    }
+    },
   }
 
 
@@ -1293,10 +1272,12 @@
       if (timeout == false) {
         return true;
       } else {
+        stop_recording(videoStorage, "pressing_"+trialN);
         return false;
       }
     }
   }
+
 
   var trial_loop = {
     timeline: [ spaceship_cam, trial_start, baseline, anticipation, ratings_emo, ratings_worry, ratings_uncer, buttons_active, set_timer, loop],
