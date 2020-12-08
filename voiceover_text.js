@@ -34,6 +34,8 @@ var vo_txt = {
   // practice uncertain buttons
   uncer_btn: "If you click a button with this symbol, you will hear either an okay sound," +
     " or a not so nice sound. Try clicking on both buttons.",
+  // check that the sounds could be heard when buttons were pressed
+  soundcheck2: "Did you hear the sounds when you clicked the buttons?",
   // explain button pressing phase LF COMMENT: I think maybe these brief "trial" 
   // instructions should be switched with the "buttons" instructions that appear earlier 
   // with a little tweaking.
