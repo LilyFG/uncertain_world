@@ -60,7 +60,7 @@ var vo_txt = {
     "Press the button for how worried you are feeling now.",
   // uncertainty rating
   uncer_rate: "How sure or not sure "+
-    "do you feel about which sounds you could hear in this round? "+
+    "do you feel about the sounds you could hear when you press the buttons? "+
     "On the left the dark blue button is if you are not feeling sure at all."+
     "On the right the light blue button is if you are feeling very sure. "+
     "Press the button for how sure you are feeling now.",
