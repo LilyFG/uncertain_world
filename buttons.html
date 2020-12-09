@@ -828,6 +828,31 @@
   //   post_trial_gap: 500
   // }
 
+  
+  var soundcheck2 = {
+      type: "html-button-response",
+      stimulus: "<div style='color: white; font-size: 3.5vh;'>Did you hear the sounds when you clicked the buttons?</div>",
+      choices: ["Yes<br>I heard the sounds", "No<br>There's something wrong"],
+      button_html: ['<button class="uw-rating uw-rating-box" style="font-size: 2.5vh; background-color: green; color: white; margin: 5vh; padding: 2vh;">%choice%</button>',
+                  '<button class="uw-rating uw-rating-box" style="font-size: 2.5vh; background-color: red; color: white; margin: 5vh; padding: 2vh;">%choice%</button>'],
+    on_load: function() {
+      speak(vo_txt.soundcheck2)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },              
+    on_finish: function(data){
+      if (data.button_pressed == 1){
+          
+          jsPsych.pauseExperiment();
+            // paused experiment and show alert message
+          document.getElementById("jspsych-content").innerHTML = "<div style='width:80%; margin: auto; color: white; font-size: 4vh; line-height: 4vh'>You have said that you couldn't hear the sounds. It is important to hear the sounds in the game.<br><br>If you could not hear them then you cannot continue, please contact the researcher for help.<br><br>If you could hear the sounds and you pressed this button by mistake, then please press 'Continue to the game'.</div><br><br><button name='contact' class='uw-rating' style='width:30%; margin: 5%' onclick='error_code = 4; console.log(error_code); jsPsych.endExperiment(); jsPsych.resumeExperiment()'>Contact researcher</button><button name='continue' class='uw-rating' style='width:30%; margin: 5%' onclick='console.log(error_code); jsPsych.resumeExperiment()'>Continue to the game</button>" 
+
+      }
+    }
+  }
+  
 
   var instr10 = {
     type: 'html-button-response',
@@ -873,6 +898,7 @@
       instr6,
       instr7,
       instr8,
+      soundcheck2,
       instr10
     ]
   }
@@ -1581,7 +1607,7 @@
     data: {name: "check_withdraw"},
     on_finish: function(data){
       if (data.button_pressed == 0){
-        error_code = 4
+        error_code = 5
         jsPsych.endExperiment()
       }
     }
@@ -1683,6 +1709,7 @@
           "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>OOPS!</div><div>The id we have for you is not in our database or has already been used. Please check that you copied the link correctly and try again.</div>",
           "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>OOPS!</div><div>This game requires permission to use the webcam and microphone. There was a problem accessing the webcam or microphone. Is it in use by another programme? Please contact the researcher for assistance.</div>",
           '<h1 style="colour: #ee7d33;">MORE QUESTIONS</h1><div style="color: white;">Please send an email to Zoe Ryan (the researcher) on <a href="mailto:z.j.ryan@pgr.reading.ac.uk">z.j.ryan@pgr.reading.ac.uk</a>. She will answer your questions and send you a new link to try the game again later.<br><br>No video data have been saved.</div>',
+          '<h1 style="colour: #ee7d33;">SOUND ERROR</h1><div style="color: white;">Oops, it looks like there is something wrong with the sound. Please send an email to Zoe Ryan (the researcher) on <a href="mailto:z.j.ryan@pgr.reading.ac.uk">z.j.ryan@pgr.reading.ac.uk</a>. She will send you a new link to try the game again later.<br><br>No video data have been saved.</div>',
           debrief.preamble // show the debrief if consent is withdrawn
         ][error_code] }
   });
