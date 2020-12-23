@@ -441,6 +441,10 @@
     on_load: function() {
       $("#nxt-btn").css("display", "none");
       speak(vo_txt.webcam, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
     },
     data: {
       name: "instr-webcam"
@@ -465,10 +469,10 @@
       });
       speak([vo_txt.spaceman_init, vo_txt.spaceman_trial][+(!practice)],
         "#nxt-btn")
-      // setTimeout(function() { // hacky solution to annoying cutoff
-      //   synth.pause();
-      //   synth.resume();
-      // }, 10000);
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
 
 
     },
@@ -510,6 +514,10 @@
     on_load: function() {
       $("#nxt-btn").css("display", "none");
       speak(vo_txt.inside, '#nxt-btn')
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
     },
     data: {
       name: "instr-inside-spaceship"
@@ -917,6 +925,10 @@
     choices: jsPsych.NO_KEYS,
     on_load: function() {
       speak(vo_txt.begin_round, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
     },
     on_finish: function(){
       start_recording()
