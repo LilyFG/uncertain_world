@@ -1498,6 +1498,9 @@
       jsPsych.data.addProperties({
         video_permissions: ["research", "education", "public", "WITHDRAWN"][consent_level]
       });
+      
+      saveData(task_name + "_" + id + "_" + jsPsych.startTime() + ".json", jsPsych.data.get().json());
+
 
     },
     data: {
