@@ -25,12 +25,11 @@ function speak(text, enable = true, end_func = null){
 
     utterThis.onerror = function (event) {
         console.error('SpeechSynthesisUtterance.onerror '+event.error);
-
     }
 
     utterThis.voice = synth.getVoices().filter(voice => voice.name == "Google UK English Female")[0];
     utterThis.pitch = 1;
     utterThis.rate = 0.9;
-    synth.speak(utterThis);
+    setTimeout(function(){synth.speak(utterThis)}, 100);
 
 }
