@@ -21,6 +21,7 @@ function speak(text, enable = true, end_func = null){
     backup_timeout = setTimeout(function(){
         timed_out = true;
         after_speech()
+        console.error(jsPsych.currentTrial().data.name+" timeout fired")
     }, 80*text.length);
         
         
