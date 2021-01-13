@@ -2,7 +2,8 @@ var synth = window.speechSynthesis;
 
 function speak(text, enable = true, end_func = null){
 
-    // function to run after the speech has finished (or after 10 seconds)
+    //timeout = false
+    // function to run after the speech has finished (or after 20 seconds)
     function after_speech(){
         if (enable) {
           console.log(enable);
@@ -16,8 +17,8 @@ function speak(text, enable = true, end_func = null){
         }
     }
     
-    // backup timeout that runs the after speech function after 10 seconds
-    backup_timeout = setTimeout(after_speech, 10000);
+    // backup timeout that runs the after speech function after 20 seconds
+    backup_timeout = setTimeout(after_speech, 20000);
         
         
     if (synth.speaking) {
