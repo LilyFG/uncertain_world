@@ -2,15 +2,8 @@ var synth = window.speechSynthesis;
 
 function speak(text, enable = true, end_func = null){
 
-    if (synth.speaking) {
-      speechSynthesis.cancel()
-        //console.error('speechSynthesis.speaking');
-        //return;
-    }
-
-    var utterThis = new SpeechSynthesisUtterance(text);
-
-    utterThis.onend = function (event) {
+    // function to run after the speech has finished (or after 10 seconds)
+    function after_speech(){
         if (enable) {
           console.log(enable);
           $(enable).css('display', "block"); // use the next argument to give the id of the next button
@@ -21,6 +14,23 @@ function speak(text, enable = true, end_func = null){
         if (end_func){
           end_func() // use the end_func argument to run a function on end
         }
+    }
+    
+    // backup timeout that runs the after speech function after 10 seconds
+    backup_timeout = setTimeout(after_speech, 10000);
+        
+        
+    if (synth.speaking) {
+      speechSynthesis.cancel()
+        //console.error('speechSynthesis.speaking');
+        //return;
+    }
+
+    var utterThis = new SpeechSynthesisUtterance(text);
+
+    utterThis.onend = function(){
+        clearTimeout(backup_timeout)
+        after_speech()
     }
 
     utterThis.onerror = function (event) {
