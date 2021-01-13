@@ -21,7 +21,7 @@ function speak(text, enable = true, end_func = null){
     backup_timeout = setTimeout(function(){
         timed_out = true;
         after_speech()
-    }, 60*text.length);
+    }, 80*text.length);
         
         
     if (synth.speaking) {
