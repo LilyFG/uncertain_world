@@ -34,7 +34,7 @@ function speak(text, enable = true, end_func = null){
 
     utterThis.onend = function(){
         // if it's not already run the function after the timeout then clear the timeout and run the function
-        if(timed_out = false){
+        if(!timed_out){
             clearTimeout(backup_timeout)
             after_speech()
         }
