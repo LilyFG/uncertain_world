@@ -21,7 +21,10 @@ function speak(text, enable = true, end_func = null){
     backup_timeout = setTimeout(function(){
         timed_out = true;
         after_speech()
-        console.error(jsPsych.currentTrial().data.name+" timeout fired")
+        error_log.push({
+          message: "timeout fired during "+jsPsych.currentTrial().data.name
+        });
+        saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
     }, 80*text.length);
         
         
