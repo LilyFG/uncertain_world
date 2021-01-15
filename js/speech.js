@@ -25,7 +25,7 @@ function speak(text, enable = true, end_func = null){
           message: "timeout fired during "+jsPsych.currentTrial().data.name
         });
         saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
-    }, 80*text.length);
+    }, 100*text.length);
         
         
     if (synth.speaking) {
@@ -41,6 +41,11 @@ function speak(text, enable = true, end_func = null){
         if(!timed_out){
             clearTimeout(backup_timeout)
             after_speech()
+        }else{
+          error_log.push({
+            message: "onend fired too"
+          });
+          saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
         }
     }
 
