@@ -438,6 +438,7 @@
       choices: ['START'],
       button_html: btn,
       on_load: function() {
+        practice = false;
         $("#nxt-btn").css("display", "none");
         speak(vo_txt.start_2, "#nxt-btn")
         setTimeout(function() { // hacky solution to annoying cutoff
