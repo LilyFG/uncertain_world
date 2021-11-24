@@ -1,0 +1,1644 @@
+<!doctype html>
+<meta charset="UTF-8">
+<html>
+
+<head>
+  <title>Buttons</title>
+  <script src="js/jquery.min.js"></script>
+  <!-- Make sure that these paths direct to the files correctly -->
+  <script src="js/jspsych.js"></script>
+  <script src="js/snap.svg-min.js"></script>
+  <script src="plugins/jspsych-call-function.js"></script>
+  <script src="plugins/jspsych-html-button-response.js"></script>
+  <script src="plugins/jspsych-audio-button-response.js"></script>
+  <script src="plugins/jspsych-audio-keyboard-response.js"></script>
+  <script src="plugins/jspsych-html-keyboard-response.js"></script>
+  <script src="plugins/jspsych-survey-text.js"></script>
+  <script src="plugins/jspsych-fullscreen.js"></script>
+  <script src="debrief_a.js"></script>
+  <script src="IUS.js"></script>
+  <script src="IDscale.js"></script>
+
+  <!-- RecordRTC online files -->
+  <script src="https://www.webrtc-experiment.com/RecordRTC.js"></script>
+
+  <!-- for Edge/FF/Chrome/Opera/etc. getUserMedia support -->
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="js/webcam.js"></script>
+  <script src="js/speech.js?ver=2"></script>
+  <script src="voiceover_text_a.js"></script>
+  <link rel="stylesheet" href="css/jspsych.css"></link>
+  <link rel="stylesheet" href="css/extra.css"></link>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat|Open+Sans" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Squada+One&display=swap" rel="stylesheet">
+</head>
+
+<body style="min-height: 100vh;">
+  <div id="jspsych-target" style="min-height: 100vh; width: 100%; margin: auto;"></div>
+
+</body>
+
+<script>
+  // soft coded variables
+  var neutral_col = "#1B796E"
+  var negative_col = "#1B2679"
+  var uncertain_col = "3F1B79"
+  var t_to_timeout = 60000 // 60000ms is 1 min
+  var anticipation_time = 10000
+  var sound_time = 2000
+  var sounds = {
+    neg: [719, 360, 380, 712],
+    neu: [400, 171, 170, 627]
+  }
+
+  var prac_sounds = {
+    neg: 624,
+    neu: 134
+  }
+
+  // initialised variables
+  var timeout = false;
+  var skip = false; // this is a variable that is used to skip sound if the timer has run out
+
+  var trialN = 0;
+
+  var buttons_start_time; // holds the start time for each buttons phase so that the time elapsed can be calculated
+  var button_grid_html; // a variable to hold the html code for the button grid so it can be replicated in the rating trials
+
+  var videoStorage = [] // a place to store the webscam recordings
+
+  var test_text = "space" // the word that is spoken to test the audio
+
+  var audio // holds the audio objects
+
+  var error_code = 0 // [0: no error, 1: id error, 2: camera permissions error, 3: yellow assent]
+
+  var repeat_assent = false // use this to suppress the sound on the assent screen
+
+  var assent_given = false; // assent has not been given yet
+
+  var interactions = [] // an empty array to house information about screen interactions
+
+  var error_log = [] // empty array to hold error messages
+  /// -------------------------FUNCTIONS FOR TRIAL SPECIFICATION---------------------------------///
+  function saveData(filename, filedata) {
+    $.ajax({
+      type: 'post',
+      cache: false,
+      url: 'save_data.php', // this is the path to the above PHP script (needs to be in the same foler as the script)
+      data: {
+        filename: filename,
+        filedata: filedata
+      }
+    });
+  }
+
+  // log errors to a file
+  window.onerror = function(message, source, lineno, colno, error) {
+    error_log.push({
+      message: message,
+      source: source,
+      line: lineno,
+      col: colno,
+      error: error
+    });
+    saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
+  };
+
+  // log errors to a file
+  window.onerror = function(message, source, lineno, colno, error) {
+    error_log.push({
+      message: message,
+      source: source,
+      line: lineno,
+      col: colno,
+      error: error
+    });
+    saveData("error_logs/" + "errors_" + id + "_" + jsPsych.startTime() + ".txt", JSON.stringify(error_log));
+  };
+
+
+
+  // function to play buffered sounds (e.g. example sounds in practice routines)
+  function play_sound(sound, time) {
+    audio = new Audio(sound);
+    audio.play();
+    setTimeout(function() {
+      audio.pause();
+      jsPsych.finishTrial()
+    }, time)
+  }
+
+
+  // star images for the background
+  var stars = "<img src='img/star.png' style='position: absolute; height: 2vh; left: 93%; top: 33%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 1vh; left: 30%; top: 29%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 1vh; left: 86%; top: 64%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 3vh; left: 48%; top: 31%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 3vh; left: 56%; top: 73%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 2vh; left: 97%; top: 42%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 3vh; left: 70%; top: 8%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 3vh; left: 78%; top: 62%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 1vh; left: 66%; top: 8%;'>" +
+    "<img src='img/star.png' style='position: absolute; height: 2vh; left: 7%; top: 49%;'>"
+
+  // set up the html for the button in the bottom left of the screen
+  var btn = '<button id="nxt-btn" class="jspsych-btn" style="font-family: Montserrat; font-size: 4vh; line-height: 1; font-weight: 600; text-align: center; position: fixed; bottom: 3vh; right: 3vw; padding: 2%; z-index: 9999;">%choice%</button>'
+
+
+  //-------------------- set subject id - uses URL variable when available
+  if (jsPsych.data.getURLVariable('pid')=="test") {
+    var id = "debug_" + jsPsych.randomization.randomID(5)
+    var debug = true;
+  } else if (jsPsych.data.getURLVariable('pid')) {
+    var id = jsPsych.data.getURLVariable('pid');
+  } else {
+    alert("Oops, we don't have an id for you. Please check that you have copied the link correctly and try again.")
+  }
+
+  var check_id = {
+    type: 'call-function',
+    func: function() {
+      if(!id){
+        error_code = 1
+        jsPsych.endExperiment()
+      }else{
+        $.getJSON( "id_database.json", function( data ) {
+          console.log(data)
+          var record = data.find(element => (element.id == id))
+          if(debug | (record && (!record.started & !record.complete)|record.exempt)){
+            console.log("id ok");
+          }else{
+            error_code = 1
+            jsPsych.endExperiment()
+          }
+        });
+    }
+    }
+  }
+
+
+
+  //------------------------ define task-level variables
+  var task_name = "uncertain_world"
+  var reps = 8;
+  var n = 0;
+  var n_blocks = 3;
+  var practice = true;
+
+
+  //----------------------- create timeline objects (stimulus lists etc.)
+
+
+  // these timelines can be created and randomised using jsPsuch.randomization functions
+  var trial_conditions = jsPsych.randomization.sampleWithoutReplacement([
+    ["cer", "uncer", "cer", "uncer"],
+    ["uncer", "cer", "uncer", "cer"]
+  ], 1)[0]
+  console.log(trial_conditions);
+  var negative_stim = jsPsych.randomization.sampleWithoutReplacement(sounds.neg, 4).map(function(el) {
+    return "sounds/" + el + ".wav";
+  })
+  var neutral_stim = jsPsych.randomization.sampleWithoutReplacement(sounds.neu, 4).map(function(el) {
+    return "sounds/" + el + ".wav";
+  })
+
+  var btn_attr = {
+    cer: {
+      neg: {
+        col: negative_col,
+        label: "<img src= 'img/neg.png' height=100%/>",
+        type: "certain",
+        negative: true
+      },
+      neu: {
+        col: neutral_col,
+        label: "<img src= 'img/neu.png' height=100%/>",
+        type: "certain",
+        negative: false
+      }
+    },
+    uncer: {
+      neg: {
+        col: negative_col,
+        label: "<large class='uncertain-symbol'>?</large>",
+        type: "uncertain",
+        negative: true
+      },
+      neu: {
+        col: neutral_col,
+        label: "<large class='uncertain-symbol'>?</large>",
+        type: "uncertain",
+        negative: false
+      }
+    }
+  }
+
+
+
+
+  // create a test trial timeline
+  var trials = [{
+      button_attr: [],
+      buttons: [],
+      condition: trial_conditions[0],
+      stim: {
+        neg: negative_stim[0],
+        neu: neutral_stim[0]
+      }
+    },
+    {
+      button_attr: [],
+      buttons: [],
+      condition: trial_conditions[1],
+      stim: {
+        neg: negative_stim[1],
+        neu: neutral_stim[1]
+      }
+    },
+    {
+      button_attr: [],
+      buttons: [],
+      condition: trial_conditions[2],
+      stim: {
+        neg: negative_stim[2],
+        neu: neutral_stim[2]
+      }
+    },
+    {
+      button_attr: [],
+      buttons: [],
+      condition: trial_conditions[3],
+      stim: {
+        neg: negative_stim[3],
+        neu: neutral_stim[3]
+      }
+    }
+  ];
+
+
+  var instr_trial = {
+    button_attr: [btn_attr.cer.neg, btn_attr.cer.neu, btn_attr.uncer.neg,
+      btn_attr.uncer.neu, btn_attr.cer.neg, btn_attr.cer.neu,
+      btn_attr.cer.neu, btn_attr.uncer.neg, btn_attr.cer.neg
+    ],
+    buttons: [],
+    condition: "instr",
+    stim: {
+      neg: "sounds/" + prac_sounds.neg + ".wav",
+      neu: "sounds/" + prac_sounds.neu + ".wav"
+    }
+  }
+
+  for (var i = 0; i < 9; i++) {
+    instr_trial.buttons[i] = {
+      label: i,
+      html: '<button class="uw-btn ' + instr_trial.button_attr[i].type + ' ' + ['neutral', 'negative'][+instr_trial.button_attr[i].negative] + '">' + instr_trial.button_attr[i].label + '</button>',
+    }
+  }
+
+
+
+  for (var trial = 0; trial < trials.length; trial++) {
+    for (var i = 0; i < 48; i++) {
+      if (i < [2, 20][+(trials[trial].condition == "cer")]) {
+        trials[trial].button_attr.push(btn_attr.cer.neg)
+      } else if (i < [4, 44][+(trials[trial].condition == "cer")]) {
+        trials[trial].button_attr.push(btn_attr.cer.neu)
+      } else if (i < [26, 46][+(trials[trial].condition == "cer")]) {
+        trials[trial].button_attr.push(btn_attr.uncer.neg)
+      } else {
+        trials[trial].button_attr.push(btn_attr.uncer.neu)
+      }
+    }
+    trials[trial].button_attr = jsPsych.randomization.shuffle(trials[trial].button_attr)
+
+    for (var i = 0; i < 48; i++) {
+      trials[trial].buttons[i] = {
+        label: i,
+        html: '<button class="uw-btn ' + trials[trial].button_attr[i].type + ' ' + ['neutral', 'negative'][+trials[trial].button_attr[i].negative] + '">' + trials[trial].button_attr[i].label + '</button>',
+      }
+    }
+  }
+
+
+
+  //--------------------------------------- define task elements for main timeline
+
+
+  var accept_camera = {
+    type: "html-keyboard-response",
+    stimulus: "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>STUDY SETUP</div><div style='color: white;'>You should see a box at the top of the screen asking for permission for the study to use your computer's camera and microphone. Please allow these so we can record your interactions with the game.<br><br>Please note that the recordings will not be uploaded until the end of the study, and you can choose not to upload them at the end of the study if you wish.<br><br>If you have any difficulties, please contact the researcher for assistance.</div>",
+    choices: jsPsych.NO_KEYS,
+    on_start: function() {
+      console.log("get media");
+      // Normalize the various vendor prefixed versions of getUserMedia.
+    //   navigator.getUserMedia = (navigator.getUserMedia ||
+    //     navigator.webkitGetUserMedia ||
+    //     navigator.mozGetUserMedia ||
+    //     navigator.msGetUserMedia);
+      navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true
+        }).then(function(localMediaStream) {
+            console.log(localMediaStream)
+            localMediaStream.getVideoTracks()[0].stop()
+            jsPsych.finishTrial({
+            permissions: 'accepted',
+            browser: navigator.userAgent
+          })
+        }).catch(function() {
+                  jsPsych.finishTrial({
+                    permissions: 'denied'
+                  })
+                  error_code = 2
+                  jsPsych.endExperiment()
+        })
+    },
+    data: {
+      name: "instr-permissions"
+    }
+  }
+
+  var soundcheck_msg = ""; // will hold some extra text if they enter the wrong word
+
+  var soundcheck = {
+    type: "survey-text",
+    preamble: function() {
+      return "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>STUDY SETUP</div><div style='color: white;'>" + soundcheck_msg +
+        "Please adjust the computer's volume so that you can hear the instructions well.<br><br>Press the play button to hear a word. Type the word into the box.</div>"
+    },
+    questions: [{
+      prompt: "<button onclick='speak(test_text);' style='font-size: 10vh; background-color: Transparent; border: none; drop-shaddow: none;'>▶️</button>",
+      required: true
+    }],
+    data: {
+      name: "instr-soundcheck"
+    }
+  }
+
+  var soundcheck_loop = {
+    timeline: [soundcheck],
+    loop_function: function() {
+      if (JSON.parse(jsPsych.data.getLastTrialData().values()[0].responses).Q0 == "space") {
+        return false;
+      } else {
+        soundcheck_msg = "Oops, that was not the correct word. Please ensure that you can hear the voice when you press the button and try again.<br><br>"
+        return true;
+      }
+    }
+  }
+
+
+  var info = {
+    type: "html-button-response",
+    stimulus: "<div style='font-family: Montserrat; font-size: 10vh; line-height: 1; font-weight: 800; text-align: center; color: #ee7d33; margin-top: 3vh;'>TASK INFORMATION</div>"+
+      "<div style='padding: 5%; font-family: Montserrat; font-size: 4vh; line-height: 1.1; text-align: left; color: white;'><p>Thank you for setting up the game. There will be a short set "+
+      "of instructions to watch.</p><p>Once they have finished the game, we will ask "+
+      "you to upload the video if you are happy. </p></div>",
+    choices: ['START'],
+    button_html: btn,
+    data: {
+      name: "info"
+    }
+  }
+
+  var fullscreen_on = {
+    type: 'fullscreen',
+    fullscreen_mode: true,
+    message: stars +
+      "<div style='padding: 20%; font-family: Montserrat; font-size: 5vh; line-height: 1; text-align: center; color: white;'>The game will continue in fullscreen mode.</div>"
+  }
+
+  var start_screen = {
+    type: "html-button-response",
+    stimulus: stars +
+      "<div style='font-family: Montserrat; font-size: 15vh; line-height: 1; font-weight: 800; text-align: right; color: #ee7d33; position: fixed; top: 50%; left: 100%; transform: translate(-110%, -50%);'>UNCERTAIN<br>WORLD</div>",
+    choices: ['START'],
+    button_html: btn,
+    on_load: function() {
+      $("#nxt-btn").css("display", "none");
+      speak(vo_txt.start, "#nxt-btn")
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    data: {
+      name: "instr-start"
+    }
+  }
+
+
+    var start_screen_2 = {
+      type: "html-button-response",
+      stimulus: stars +
+        "<div style='font-family: Montserrat; font-size: 15vh; line-height: 1; font-weight: 800; text-align: right; color: #ee7d33; position: fixed; top: 50%; left: 100%; transform: translate(-110%, -50%);'>YOU'RE READY!</div>",
+      choices: ['START'],
+      button_html: btn,
+      on_load: function() {
+        $("#nxt-btn").css("display", "none");
+        speak(vo_txt.start_2, "#nxt-btn")
+        setTimeout(function() { // hacky solution to annoying cutoff
+          synth.pause();
+          synth.resume();
+        }, 10000);
+      },
+      data: {
+        name: "start-2"
+      }
+    }
+
+  // webcam intro
+  var webcam_instr = {
+    type: "html-button-response",
+    stimulus: "<img src='img/webcam.png'>",
+    choices: ['NEXT'],
+    button_html: btn,
+    on_load: function() {
+      $("#nxt-btn").css("display", "none");
+      speak(vo_txt.webcam, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    data: {
+      name: "instr-webcam"
+    }
+  }
+
+  // astronaut suit webcam setup
+  var spaceship_cam = {
+    type: "html-button-response",
+    stimulus: "<div class='video-outer'><video id='your-video-id' controls autoplay playsinline></video></div>" +
+      "<img class='overlay' src='img/spaceship_transparent.png'/>",
+    choices: ['NEXT'],
+    button_html: btn,
+    on_load: function() {
+      $("#nxt-btn").css("display", "none");
+      navigator.mediaDevices.getUserMedia({
+        video: true
+      }).then(function(camera) {
+        window.localStream = camera;
+        // preview camera during recording
+        document.getElementById('your-video-id').srcObject = camera;
+      });
+      speak([vo_txt.spaceman_init, vo_txt.spaceman_trial][+(!practice)],
+        "#nxt-btn")
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+
+
+    },
+    on_finish: function() {
+      localStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+    },
+    data: {
+      name: "spaceman"
+    }
+  }
+
+
+  // inside the spaceship
+  var instr3 = {
+    type: "html-button-response",
+    stimulus: "<img src='img/spaceship_transparent.png' style='position: absolute; height: 100vh; width: 100vw; transform: translate(-50%, -49%);'>",
+    choices: ['NEXT'],
+    button_html: '<button id="nxt-btn" class="jspsych-btn blink" style="position: fixed; bottom: 50vh; right: 76.5vw; padding: 6vh 6vw; z-index: 9999; background: transparent; border: solid #adaba3 2px"></button>',
+    on_load: function() {
+      $("#nxt-btn").css("display", "none");
+      speak(vo_txt.inside, '#nxt-btn')
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    data: {
+      name: "instr-inside-spaceship"
+    }
+  }
+
+  var instr4 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Autopilot engaged, please wait!</div>",
+    choices: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    margin_horizontal: '0px',
+    on_load: function() {
+      function end_func() {
+        play_sound("sounds/takeoff_short.mp3", 5000)
+      }
+
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_prac')
+
+      $('.uw-btn').css('pointer-events', 'none');
+
+      speak(vo_txt.autopilot, false, end_func)
+
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 20000);
+
+      var grid = $(".btn-grid").clone().find("*").removeAttr("id").end()[0]
+      grid.id = "btn-grid"
+      button_grid_html = grid.outerHTML // this saves just the html for the button grid without the ids that cause problems later
+    },
+    response_ends_trial: false,
+    data: {
+      name: "instr-anticipation"
+    }
+  }
+
+
+  var instr5 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Autopilot engaged, please wait!</div>",
+    choices: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    margin_horizontal: '0px',
+    on_load: function() {
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_prac')
+
+      $('.uw-btn').css('pointer-events', 'none');
+      speak(vo_txt.buttons, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 20000);
+    },
+    on_finish: function() {},
+    response_ends_trial: false,
+    data: {
+      name: "anticipation-prac-2"
+    }
+  }
+
+
+  var instr6 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Click a button!</div>",
+    choices: ['<img src= "img/neu.png" height=100%/></button>', '<img src= "img/neu.png" height=100%/></button>'],
+    button_html: ['<button class="uw-btn certain neutral" id="testbtn"><img src= "img/neu.png" height=100%/></button>', '<button class="uw-btn certain neutral" id="testbtn"><img src= "img/neu.png" height=100%/></button>'],
+    margin_horizontal: '0px',
+    on_load: function() {
+
+      function end_func() {
+        $('.uw-btn').css('pointer-events', 'auto');
+        $('.uw-btn').prop('disabled', false);
+        $('.uw-btn').on("click", // re-establish click event
+          function() {
+            $(".uw-btn").prop('disabled', true)
+            play_sound("sounds/" + prac_sounds.neu + ".wav", sound_time)
+          });
+      }
+
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_btn')
+      $(".jspsych-html-button-response-button").css('pointer-events', 'none'); // disable the button wrapper
+
+      $('.uw-btn').css('pointer-events', 'none');
+
+      speak(vo_txt.neu_btn, false, end_func)
+
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 20000);
+    },
+    response_ends_trial: false,
+    data: {
+      name: "practice-neu-btn"
+    }
+  }
+
+
+  var instr7 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Click a button!</div>",
+    choices: ['<img src= "img/neg.png" height=100%/></button>', '<img src= "img/neg.png" height=100%/></button>'],
+    button_html: ['<button class="uw-btn certain negative" id="testbtn"><img src= "img/neg.png" height=100%/></button>', '<button class="uw-btn certain negative" id="testbtn"><img src= "img/neg.png" height=100%/></button>'],
+    margin_horizontal: '0px',
+    on_load: function() {
+
+      function end_func() {
+        $('.uw-btn').css('pointer-events', 'auto');
+        $('.uw-btn').prop('disabled', false);
+        $('.uw-btn').on("click", // re-establish click event
+          function() {
+            $(".uw-btn").prop('disabled', true) // disable the buttons while the sound is playing
+            play_sound("sounds/" + prac_sounds.neg + ".wav", sound_time)
+          });
+      }
+
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_btn')
+      $(".jspsych-html-button-response-button").css('pointer-events', 'none');
+
+      $('.uw-btn').css('pointer-events', 'none');
+
+      speak(vo_txt.neg_btn, false, end_func)
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 20000);
+    },
+    response_ends_trial: false,
+    data: {
+      name: "practice-neg-btn"
+    }
+  }
+
+  // Practice uncertain buttons - both buttons must be pressed
+  var instr8 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Click the buttons!</div>",
+    choices: ["<large class='uncertain-symbol'>?</large>", "<large class='uncertain-symbol'>?</large>"],
+    button_html: ['<button class="uw-btn uncertain prac" id="testbtn" data-sound="neg" data-num=0><large class="uncertain-symbol">?</large></button>', '<button class="uw-btn uncertain prac" id="testbtn" data-sound="neu" data-num=1><large class="uncertain-symbol">?</large></button>'],
+    margin_horizontal: '0px',
+    on_load: function() {
+      var pressed = [0, 0]
+      function play_sound_reset() {
+        pressed[this.dataset.num]++ // increment the pressed button counter
+        var audio = new Audio("sounds/" + prac_sounds[this.dataset.sound] + ".wav");
+        audio.play();
+        setTimeout(function() {
+          audio.pause();
+          if (pressed.every((currentValue) => currentValue > 0)) {
+            jsPsych.finishTrial({
+              button_pressed: JSON.stringify(pressed)
+            })
+          } else {
+            $('.uw-btn').prop('disabled', false);
+          }
+        }, sound_time)
+      };
+
+      function end_func() {
+        $('.uw-btn').css('pointer-events', 'auto');
+        $(':button').prop('disabled', false);
+        $('.prac').on("click", play_sound_reset)
+      }
+
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_btn')
+      $(".jspsych-html-button-response-button").css('pointer-events', 'none');
+
+      $('.uw-btn').css('pointer-events', 'none');
+
+      speak(vo_txt.uncer_btn, false, end_func)
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 20000);
+    },
+    response_ends_trial: false,
+    data: {
+      name: "practice-uncer-btn"
+    }
+  }
+
+  var soundcheck2 = {
+      type: "html-button-response",
+      stimulus: "<div style='color: white; font-size: 3.5vh;'>Did you hear the sounds when you clicked the buttons?</div>",
+      choices: ["Yes<br>I heard the sounds", "No<br>There's something wrong"],
+      button_html: ['<button class="uw-rating uw-rating-box" style="font-size: 2.5vh; background-color: green; color: white; margin: 5vh; padding: 2vh;">%choice%</button>',
+                  '<button class="uw-rating uw-rating-box" style="font-size: 2.5vh; background-color: red; color: white; margin: 5vh; padding: 2vh;">%choice%</button>'],
+    on_load: function() {
+      speak(vo_txt.soundcheck2)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(data){
+      if (data.button_pressed == 1){
+
+          jsPsych.pauseExperiment();
+            // paused experiment and show alert message
+          document.getElementById("jspsych-content").innerHTML = "<div style='width:80%; margin: auto; color: white; font-size: 4vh; line-height: 4vh'>You have said that you couldn't hear the sounds. It is important to hear the sounds in the game.<br><br>If you could not hear them then you cannot continue, please contact the researcher for help.<br><br>If you could hear the sounds and you pressed this button by mistake, then please press 'Continue to the game'.</div><br><br><button name='contact' class='uw-rating' style='width:30%; margin: 5%' onclick='error_code = 4; console.log(error_code); jsPsych.endExperiment(); jsPsych.resumeExperiment()'>Contact researcher</button><button name='continue' class='uw-rating' style='width:30%; margin: 5%' onclick='console.log(error_code); jsPsych.resumeExperiment()'>Continue to the game</button>"
+
+      }
+    }
+  }
+
+
+  var instr10 = {
+    type: 'html-button-response',
+    stimulus: "<div class='console'>Buttons activated!</div>",
+    choices: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return instr_trial.buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    margin_horizontal: '0px',
+    on_load: function() {
+      $("#jspsych-html-button-response-btngroup").addClass('btn-grid')
+      $("#jspsych-html-button-response-btngroup").addClass('antic_prac')
+      $('.uw-btn').css('pointer-events', 'none');
+      speak(vo_txt.trial, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function() {},
+    response_ends_trial: false,
+    data: {
+      name: "practice-buttons-active"
+    }
+  }
+
+
+  // --------------- INSTRUCTIONS TIMELINE ------------------- //
+  // comment out lines using // to skip (may cause sound sync errors)
+  var instr = {
+    timeline: [
+      webcam_instr,
+      spaceship_cam,
+      instr3,
+      instr4,
+      instr5,
+      instr6,
+      instr7,
+      instr8,
+      soundcheck2,
+      instr10
+    ]
+  }
+
+
+  var trial_start = {
+    type: 'html-keyboard-response',
+    on_start: function(){
+      if(timeout){
+          timeout = false
+          skip = false
+          trialN++
+      }
+    },
+    stimulus: function() {
+        console.log("set stim")
+      return "<div class='console'>Round " + (jsPsych.data.get().filter({name: "trial_start"}).values().length + 1) + " of 4</div>"
+    },
+    choices: jsPsych.NO_KEYS,
+    on_load: function() {
+      speak(vo_txt.begin_round, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(){
+      start_recording()
+    },
+    data: {
+      name: "trial_start"
+    }
+  }
+
+  var baseline = {
+    type: 'audio-keyboard-response',
+    stimulus: "sounds/415.wav",
+    prompt: "<div class='console'>Countdown</div>",
+    choices: jsPsych.NO_KEYS,
+    trial_duration: 2000,
+    data: {
+      name: "baseline"
+    }
+  }
+
+
+  var anticipation = {
+    type: 'audio-button-response',
+    stimulus: "sounds/takeoff.mp3",
+    preamble: "<div class='console'>Autopilot engaged, please wait!</div>",
+    choices: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    margin_horizontal: '0px',
+    on_load: function() {
+      $("#jspsych-audio-button-response-btngroup").addClass('btn-grid')
+      var grid = $(".btn-grid").clone().find("*").removeAttr("id").end()[0]
+      grid.id = "btn-grid"
+      button_grid_html = grid.outerHTML
+      $('.uw-btn').css('pointer-events', 'none');
+    },
+    trial_duration: anticipation_time,
+    response_ends_trial: false,
+    data: {
+      name: "anticipation"
+    },
+    on_finish: function(data) {
+      data.array = JSON.stringify(trials[trialN])
+      data.trialN = trialN
+      stop_recording(videoStorage, "antic_"+trialN)
+    }
+  }
+
+  var ratings_emo = {
+    type: "html-button-response",
+    stimulus: function() {
+      return button_grid_html + "<div class='console'>How unhappy or happy do you feel about pressing the buttons?</div>"
+    },
+    choices: [0, 1, 2, 3, 4],
+    button_html: ['<button class="uw-btn rating" style="background-color: #ffe0ad; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam0.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #ffcf8a; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam1.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #dba98f; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam2.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #9d859f; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam3.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #754a83; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam4.png" height=80%/></button>',
+    ],
+    on_load: function() {
+      $("#jspsych-html-button-response-btngroup").addClass("uw-rating-container");
+
+      $(".console").on('transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd',
+        function() {
+          console.log("transition ended");
+          $(".uw-rating-container").css("display", "flex");
+        });
+
+      setTimeout(function() {
+        $(".btn-grid").addClass("shrink");
+        $(".console").addClass("shift");
+      }, 200)
+
+
+      $(':button').css('pointer-events', 'none');
+      $(':button').prop('disabled', true);
+
+      speak(vo_txt.sam_rate, '.rating')
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(data) {
+      data.trialN = trialN
+      var rating_score;
+      var rating_text;
+      switch(data.button_pressed){
+        case "0":
+          rating_score = 5;
+          rating_text = "very happy"
+          break;
+        case "1":
+          rating_score = 4;
+          rating_text = "happy"
+          break;
+        case "2":
+          rating_score = 3;
+          rating_text = "neutral"
+          break;
+        case "3":
+          rating_score = 2;
+          rating_text = "unhappy"
+          break;
+        case "4":
+          rating_score = 1;
+          rating_text = "very unhappy"
+          break;
+      }
+      data.rating_text = rating_text;
+      data.rating_score = rating_score;
+    },
+    data: {
+      name: "emotion_rating"
+    }
+  }
+
+
+  var ratings_worry = {
+    type: "html-button-response",
+    stimulus: function() {
+      return button_grid_html + "<div class='console'>How worried or not worried do you feel about this round?</div>"
+    },
+    choices: [0, 1, 2, 3],
+    button_html: [
+      '<button id="uw-rate4" class="uw-rating" style="flex-grow: 1;">Very worried</button>',
+      '<button id="uw-rate3" class="uw-rating" style="flex-grow: 1;">Quite worried</button>',
+      '<button id="uw-rate2" class="uw-rating" style="flex-grow: 1;">A little worried</button>',
+      '<button id="uw-rate1" class="uw-rating" style="flex-grow: 1;">Not worried at all</button>'
+    ],
+    on_load: function() {
+      $("#jspsych-html-button-response-btngroup").addClass("uw-rating-container");
+      $(".uw-rating-container").css("display", "flex");
+
+      $(".btn-grid").addClass("shrink");
+      $(".console").addClass("shift");
+
+      $(':button').css('pointer-events', 'none');
+      $(':button').prop('disabled', true);
+
+
+      $('.jspsych-html-button-response-button').css({
+        'width': '25%',
+        'margin': '1vh'
+      });
+      $('.jspsych-html-button-response-button').addClass('uw-rating-box');
+
+      speak(vo_txt.worry_rate, ".uw-rating")
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(data) {
+      data.trialN = trialN
+      var rating_score;
+      var rating_text;
+      switch(data.button_pressed){
+        case "0":
+          rating_score = 4;
+          rating_text = "very worried"
+          break;
+        case "1":
+          rating_score = 3;
+          rating_text = "quite worried"
+          break;
+        case "2":
+          rating_score = 2;
+          rating_text = "a little worried"
+          break;
+        case "3":
+          rating_score = 1;
+          rating_text = "not at all worried"
+          break;
+      }
+      data.rating_text = rating_text;
+      data.rating_score = rating_score;
+    },
+    post_trial_gap: 0,
+    data: {
+      name: "worry_rating"
+    }
+  }
+
+  var ratings_uncer = {
+    type: "html-button-response",
+    stimulus: function() {
+      return button_grid_html + "<div class='console'>How sure or not sure do you feel about the sounds in this round?</div>"
+    },
+    choices: [0, 1, 2, 3],
+    button_html: [
+      '<button id="uw-uncer-rate4" class="uw-rating" style="flex-grow: 1;">Very sure</button>',
+      '<button id="uw-uncer-rate3" class="uw-rating" style="flex-grow: 1;">Quite sure</button>',
+      '<button id="uw-uncer-rate2" class="uw-rating" style="flex-grow: 1;">A little sure</button>',
+      '<button id="uw-uncer-rate1" class="uw-rating" style="flex-grow: 1;">Not sure at all</button>'
+    ],
+    on_load: function() {
+      $("#jspsych-html-button-response-btngroup").addClass("uw-rating-container");
+      $(".uw-rating-container").css("display", "flex");
+      $(".btn-grid").addClass("shrink");
+      $(".console").addClass("shift");
+
+      $(':button').css('pointer-events', 'none');
+      $(':button').prop('disabled', true);
+
+      $('.uw-rating-container').children().css({
+        'width': '25%',
+        'margin': '1vh'
+      });
+      $('.uw-rating-container').children().addClass('uw-rating-box');
+      speak(vo_txt.uncer_rate, ".uw-rating")
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(data) {
+      data.trialN = trialN
+      var rating_score;
+      var rating_text;
+      switch(data.button_pressed){
+        case "0":
+          rating_score = 4;
+          rating_text = "very sure"
+          break;
+        case "1":
+          rating_score = 3;
+          rating_text = "quite sure"
+          break;
+        case "2":
+          rating_score = 2;
+          rating_text = "a little sure"
+          break;
+        case "3":
+          rating_score = 1;
+          rating_text = "not at all sure"
+          break;
+      }
+      data.rating_text = rating_text;
+      data.rating_score = rating_score;
+    },
+    post_trial_gap: 0,
+    data: {
+      name: "uncertainty_rating"
+    }
+  }
+
+  var buttons_active = {
+    type: "html-keyboard-response",
+    stimulus: function() {
+      return button_grid_html + "<div class='console'>Buttons activated</div>"
+    },
+    choices: jsPsych.NO_KEYS,
+    on_load: function() {
+      $(".btn-grid").addClass("shrink");
+      $(".console").addClass("shift");
+
+      $(':button').css('pointer-events', 'none');
+      $(':button').prop('disabled', true);
+
+      setTimeout(function(){
+        $(".btn-grid").addClass("grow");
+        $(".console").addClass("shift-back");
+      }, 200)
+
+      speak(vo_txt.buttons_active, false, jsPsych.finishTrial)
+      setTimeout(function() { // hacky workaround for sound cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(data) {
+      data.trialN = trialN
+      start_recording()
+      buttons_start_time = Date.now()
+    },
+    post_trial_gap: 0,
+    data: {
+      name: "buttons_active"
+    }
+  }
+
+  var selection = {
+    type: 'audio-button-response',
+    stimulus: "sounds/background.wav",
+    preamble: "<div class='console'>Buttons activated</div>",
+    choices: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    on_load: function() {
+      $("#jspsych-audio-button-response-btngroup").addClass('btn-grid')
+    },
+    margin_horizontal: '0px',
+    on_finish: function(data) {
+      if (t_to_timeout <= (Date.now() - buttons_start_time)) {
+        timeout = true
+        skip = true
+      }
+      if (data.button_pressed) {
+        data.col = trials[trialN].button_attr[data.button_pressed].col
+        data.label = trials[trialN].button_attr[data.button_pressed].label
+        data.type = trials[trialN].button_attr[data.button_pressed].type
+        data.negative = trials[trialN].button_attr[data.button_pressed].negative
+      }
+      data.timeout = timeout
+      data.trialN = trialN
+      return data
+    },
+    trial_duration: function() {
+      return t_to_timeout - (Date.now() - buttons_start_time)
+    }, // calculate how much of the time limit is left and end the trial if passed
+    data: {
+      name: "selection"
+    },
+  }
+
+
+  var sound = {
+    type: 'audio-button-response',
+    stimulus: function() {
+      return trials[trialN].stim[["neu", "neg"][+jsPsych.data.getLastTrialData().values()[0].negative]] // this returns the negative or neutral sound for this trial
+    },
+    preamble: "<div class='console'>Sound playing</div>",
+    choices: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.label;
+      })
+    },
+    button_html: function() {
+      return trials[trialN].buttons.map(function(el) {
+        return el.html;
+      })
+    },
+    margin_horizontal: '0px',
+    on_load: function() {
+      $("#jspsych-audio-button-response-btngroup").addClass('btn-grid')
+      $('.uw-btn').css('pointer-events', 'none'); // disable button pressing
+    },
+    response_ends_trial: false, // button responses do not end trial
+    trial_ends_after_audio: true,
+    data: {
+      name: "sound"
+    }
+  }
+
+  var sound_conditional = {
+      timeline: [sound],
+      conditional_function: function() {
+        if (skip | !jsPsych.data.get().last().values()[0].button_pressed) { // if the trial is over or the selection trial finished without button pressing
+          return false
+        }else{
+          return true
+        }
+      }
+    }
+
+
+  var loop = {
+    timeline: [selection, sound_conditional],
+    loop_function: function(data) {
+      if (timeout == false) {
+        return true;
+      } else {
+        stop_recording(videoStorage, "pressing_"+trialN);
+        return false;
+      }
+    }
+  }
+
+
+  var trial_loop = {
+    timeline: [ spaceship_cam, trial_start, baseline, anticipation, ratings_emo, ratings_worry, ratings_uncer, buttons_active, loop],
+    loop_function: function(data) {
+      if (trialN < 3) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  var ratings_start = {
+    type: 'html-keyboard-response',
+    stimulus: "<div class='console'>How do the sounds make you feel?</div>",
+    choices: jsPsych.NO_KEYS,
+    on_load: function() {
+      speak(vo_txt.rate_sounds, false, jsPsych.finishTrial)
+    },
+    post_trial_gap: 1000,
+    data: {
+      name: "sound_rating_intro"
+    }
+  }
+
+  var rate_sounds = {
+    type: 'audio-button-response',
+    preamble: "<div class='console'>How does this sound make you feel?</div>",
+    choices: [0, 1, 2, 3, 4],
+    button_html: ['<button class="uw-btn rating" style="background-color: #ffe0ad; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam0.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #ffcf8a; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam1.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #dba98f; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam2.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #9d859f; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam3.png" height=80%/></button>',
+      '<button class="uw-btn rating" style="background-color: #754a83; height: 18vh; width: 18vh; margin: 0.6vw;"><img src="img/sam4.png" height=80%/></button>',
+    ],
+    on_load: function() {
+      $("#jspsych-audio-button-response-btngroup").addClass("uw-rating-container");
+      $(".console").css("transform", "translate(-50%, -300%)")
+      setTimeout(function() {
+        $("#jspsych-audio-button-response-btngroup").css("display", "flex")
+      }, sound_time)
+    },
+    timeline: jsPsych.randomization.shuffle([{ // using randomization.shuffle shuffles the order of presentation
+        stimulus: negative_stim[0],
+        data: {
+          name: "sound_rating",
+          valence: "neg"
+        }
+      },
+      {
+        stimulus: negative_stim[1],
+        data: {
+          name: "sound_rating",
+          valence: "neg"
+        }
+      },
+      {
+        stimulus: negative_stim[2],
+        data: {
+          name: "sound_rating",
+          valence: "neg"
+        }
+      },
+      {
+        stimulus: negative_stim[3],
+        data: {
+          name: "sound_rating",
+          valence: "neg"
+        }
+      },
+      {
+        stimulus: neutral_stim[0],
+        data: {
+          name: "sound_rating",
+          valence: "neu"
+        }
+      },
+      {
+        stimulus: neutral_stim[1],
+        data: {
+          name: "sound_rating",
+          valence: "neu"
+        }
+      },
+      {
+        stimulus: neutral_stim[2],
+        data: {
+          name: "sound_rating",
+          valence: "neu"
+        }
+      },
+      {
+        stimulus: neutral_stim[3],
+        data: {
+          name: "sound_rating",
+          valence: "neu"
+        }
+      },
+    ]),
+    post_trial_gap: 500,
+    on_finish: function(data) {
+      data.trialN = trialN
+      var rating_score;
+      var rating_text;
+      switch(data.button_pressed){
+        case "0":
+          rating_score = 5;
+          rating_text = "very happy"
+          break;
+        case "1":
+          rating_score = 4;
+          rating_text = "happy"
+          break;
+        case "2":
+          rating_score = 3;
+          rating_text = "neutral"
+          break;
+        case "3":
+          rating_score = 2;
+          rating_text = "unhappy"
+          break;
+        case "4":
+          rating_score = 1;
+          rating_text = "very unhappy"
+          break;
+      }
+      data.rating_text = rating_text;
+      data.rating_score = rating_score;
+    },
+    data: {name: "sound_rating"}
+  }
+
+  var thank_you = {
+    type: "html-button-response",
+    stimulus: stars +
+      "<div style='font-family: Montserrat; font-size: 15vh; line-height: 1; font-weight: 800; text-align: right; color: #ee7d33; position: fixed; top: 50%; left: 100%; transform: translate(-110%, -50%);'>THANK YOU</div>"+
+      "<div style='width: 80%; font-family: Montserrat; font-size: 5vh; line-height: 1; text-align: right; color: white; position: fixed; top: 70%; left: 100%; transform: translate(-110%, -50%);'>Please press next to upload the videos and complete the debrief.</div>",
+    choices: ['NEXT'],
+    button_html: btn,
+    on_load: function() {
+      $("#nxt-btn").css("display", "none");
+      speak(vo_txt.thank_you, false, function(){$('#nxt-btn').css('display','block')})
+      setTimeout(function() { // hacky solution to annoying cutoff
+        synth.pause();
+        synth.resume();
+      }, 10000);
+    },
+    on_finish: function(){
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+            .then(() => console.log("Document Exited form Full screen mode"))
+            .catch((err) => console.error(err))
+        }
+    }
+  }
+
+  var upload_videos = {
+    type: "html-button-response",
+    stimulus: "<div style='color: white;'>Please choose the level of consent you would like to give for the video upload</div><img style='background-color: white' src='https://github.com/sociallearninglab/online_testing_materials/raw/master/misc_files/online_consent_form_image.png' >",
+    choices: ["Level 1<br>Research Only", "Level 2<br>Educational Use", "Level 3<br>Public", "Withdraw<br>I don't want to<br>upload the video"],
+    button_html: '<button class="jspsych-btn" style="width: 150px; height: 80px">%choice%</button>',
+    on_finish: function(data) {
+      var videos_uploaded = 0 // counter for successful uploads
+      jsPsych.pauseExperiment()
+      document.getElementById("jspsych-content").innerHTML="<div style='color: white; font-family: Montserrat;'>Please wait while the videos upload."+
+      "This upload can take a minute or two. Please do not click away from this screen until the upload has completed and you have gone through to our debrief screen.</div>"+
+      "<img id='jspsych-loading-img' src='img/small_rocket.png' style = 'position: absolute; left: 0%; top: 80%; height: 10%'>"
+      $( document ).ajaxSuccess(function( event, request, settings ) {
+        videos_uploaded++
+        if(videos_uploaded == videoStorage.length){
+          jsPsych.resumeExperiment();
+        }else{
+          if(jsPsych.getDisplayElement().querySelector('#jspsych-loading-img')) {
+            jsPsych.getDisplayElement().querySelector('#jspsych-loading-img').style.marginLeft = (videos_uploaded/videoStorage.length*100)+"%";
+          }
+        };
+      });
+
+      var consent_level = data.button_pressed
+      if (consent_level < 3) {
+        for (var i = 0; i < videoStorage.length; i++) {
+          uploadBlob(videoStorage[i].file,
+            task_name + "_" + id + "_" + videoStorage[i].name + "_consent_" + ["research", "education", "public", "WITHDRAWN"][consent_level])
+        }
+      }
+
+      jsPsych.data.addProperties({
+        video_permissions: ["research", "education", "public", "WITHDRAWN"][consent_level]
+      });
+
+      saveData(task_name + "_" + id + "_" + jsPsych.startTime() + ".json", jsPsych.data.get().json());
+
+
+    },
+    data: {
+      name: "upload_videos"
+    }
+  }
+
+  //
+  //   var assent = {
+  //     type: 'html-button-response',
+  //     stimulus: "<div class='console'>Ready to play?</div>",
+  //     choices: ["Yes", "Maybe", "No"],
+  //     button_html: [
+  //       "<button style='border-radius: 50%; background-color: red; width: 10vh; height: 10vh; font-size: 1.5vh;'>Don't want to play</button>",
+  //       "<button style='border-radius: 50%; background-color: orange; width: 10vh; height: 10vh; font-size: 1.5vh;'>See or read instructions again</button>",
+  //       "<button style='border-radius: 50%; background-color: green; width: 10vh; height: 10vh; font-size: 1.5vh;'>Play the game</button>"
+  //     ],
+  //     margin_horizontal: '0px',
+  //     on_load: function() {
+  //       $("#jspsych-html-button-response-btngroup").css({
+  //         'display': 'flex',
+  //         'flex-direction': 'column',
+  //         'padding': '3vh',
+  //         'width': '10vh',
+  //         'margin': 'auto',
+  //         'background-color': 'black',
+  //         'border-radius': '3vh'
+  //       })
+  //
+  //       if(!repeat_assent){
+  //         $(':button').css('pointer-events', 'none');
+  //         $(':button').prop('disabled', true);
+  //         speak(vo_txt.assent, ':button');
+  //         setTimeout(function() { // hacky workaround for sound cutoff
+  //           synth.pause();
+  //           synth.resume();
+  //         }, 10000);
+  //       }
+  //     },
+  //     data: {
+  //       name: "assent"
+  //     },
+  //     on_finish: function(data){
+  //       if (data.button_pressed == 2){ // if they pressed the green assent button
+  //         assent_given = true;
+  //         practice = false
+  //       }
+  //     }
+  //   }
+  //
+  //
+  // var yellow_question = {
+  //   type: 'html-button-response',
+  //   stimulus:  "<h1 style='font-family: Montserrat; font-weight: 800; color: #ee7d33; margin-top: 2vh;'>HERE'S WHAT TO DO</h1>"+
+  //         "<div id='repeat_instruction' style='text-align: left; color: white; font-size: 2.5vh;'>"+
+  //         "<p>You will be going for a ride on a spaceship. You will be shown lots of buttons on the screen.</p>"+
+  //         "<p>If you press a button with this symbol <img src='img/neg_crop.png' style='width: 7vh; margin: 0%;'> you will hear a not so nice sound like a dentist drill or a siren.</p>"+
+  //         "<p>If you press a button with this symbol <img src='img/neu_crop.png' style='width: 7vh; margin: 0%;'> you will hear an okay sound like rain or a rattle.</p>"+
+  //         "<p>And if you press a button with this symbol <large class='uncertain-symbol' style='font-size:6vh'>?</large> you will hear either an okay or a not so nice sound.</p>"+
+  //         "<p>You will have a minute to press as many or as few buttons as you like. You don’t have to press any "+
+  //         "buttons if you don’t want to or you can click on multiple buttons, multiple times, it is entirely up to you.</p>"+
+  //         "<p>You will play the game four times.</p><p>What would you like to do next?</p>",
+  //
+  //   choices: ["Email the researcher<br>and try again later", "Repeat the<br>instructions", "Start the game<br><br>"],
+  //   button_html: ['<button class="uw-rating uw-rating-box" style="font-size: 2vh; background-color: red; margin: 5vh; padding: 2vh;">%choice%</button>',
+  //                 '<button class="uw-rating uw-rating-box" style="font-size: 2vh; background-color: orange; margin: 5vh; padding: 2vh;">%choice%</button>',
+  //                 '<button class="uw-rating uw-rating-box" style="font-size: 2vh; background-color: green; margin: 5vh; padding: 2vh;">%choice%</button>'],
+  //   on_load: function(){
+  //     document.body.style.overflow = "auto"; // allow scrolling down to see the full instructions
+  //   },
+  //   on_finish: function(data) {
+  //     document.body.style.overflow = "hidden";
+  //     if (data.button_pressed == 0) {
+  //       error_code=3
+  //       jsPsych.endExperiment();
+  //     }else if (data.button_pressed == 2){
+  //       assent_given = true // if they pressed the green button then stop the assent loop
+  //     }
+  //   }
+  // }
+  //
+  //
+  // // if the participant chooses to go back through the instructions
+  // var if_repeat_instructions = {
+  //   timeline: [instr],
+  //   conditional_function: function() {
+  //     if (jsPsych.data.get().last(1).values()[0].button_pressed == 1) { // run this timeline if orange button is pressed
+  //       return true
+  //     } else {
+  //       return false
+  //     }
+  //   }
+  // }
+  //
+  // // this conditional runs to check if they pressed the yellow or red buttons if yellow, then the yellow question (see above) is asked and they are either prompted to contact a researcher or see the instructions and assent screen again. If red then they go straight to the debrief.
+  // var if_assent_yellow = {
+  //   timeline: [yellow_question, if_repeat_instructions],
+  //   conditional_function: function() {
+  //     console.log("yellow loop: " + jsPsych.data.get().last(1).values()[0].button_pressed)
+  //     if (jsPsych.data.get().last(1).values()[0].name == "assent"){
+  //       if (jsPsych.data.get().last(1).values()[0].button_pressed == 1) { // run this timeline if orange button is pressed
+  //         return true
+  //       } else {
+  //         console.log("yellow false");
+  //         return false
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // var red_question = {
+  //   type: "html-button-response",
+  //   stimulus: "<h1 style='color: white; margin: 2vh; '>Do you want to leave the game?</h1>",
+  //   choices: ["Yes", "No"],
+  //   button_html: "<button class='uw-rating' style='width: 15vh'>%choice%</button>",
+  //   data: {name: "check_withdraw"},
+  //   on_finish: function(data){
+  //     if (data.button_pressed == 0){
+  //       error_code = 5
+  //       jsPsych.endExperiment()
+  //     }
+  //   }
+  // }
+  //
+  // // this loop runs to check if they pressed the yellow or red buttons if yellow, then the yellow question (see above) is asked and they are either prompted to contact a researcher or see the instructions and assent screen again. If red then they go straight to the debrief.
+  // var if_assent_red = {
+  //   timeline: [red_question],
+  //   conditional_function: function() {
+  //     repeat_assent = true;
+  //     if (jsPsych.data.get().last(1).values()[0].name == "assent"){
+  //       if (jsPsych.data.get().last(1).values()[0].button_pressed == 0) { // run this timeline if red button is pressed
+  //         return true
+  //       } else {
+  //         return false
+  //       }
+  //     }else{
+  //       return false
+  //     }
+  //   }
+  // }
+  //
+  // assent_loop = {
+  //     timeline: [assent, if_assent_yellow, if_assent_red],
+  //     loop_function: function(data){
+  //         if(!assent_given){
+  //             return true;
+  //         } else {
+  //             return false;
+  //         }
+  //     }
+  // }
+
+
+  // the main task timeline
+  var timeline = [check_id, accept_camera, soundcheck_loop, info, fullscreen_on, start_screen, instr, start_screen_2, trial_loop, ratings_start, rate_sounds, thank_you, upload_videos, debrief]
+
+  // some switching logic to make it easy to go to different bits of the task using a URL variable
+  switch (jsPsych.data.getURLVariable('goto')) {
+    case "trials":
+      timeline = [accept_camera, trial_loop, ratings_start, rate_sounds, upload_videos];
+      break;
+    case "debrief":
+      timeline = [accept_camera, debrief];
+      break;
+    case "rate_sounds":
+      timeline = [accept_camera, ratings_start, rate_sounds];
+      break;
+    case "assent":
+      timeline = [accept_camera, assent_loop];
+      break;
+    case "prac_trials":
+      timeline = [accept_camera, instr6, instr7, instr8];
+      break;
+    case "upload":
+      timeline = [accept_camera, fullscreen_on,  thank_you, upload_videos, debrief]
+      break;
+    case "spaceman":
+      timeline = [accept_camera, fullscreen_on, start_screen, spaceship_cam, thank_you]
+      break;
+  }
+
+  //--------------------------ADD PROPERTIES TO THE DATA OF ALL FILES
+
+  jsPsych.data.addProperties({
+    id: id,
+    trial_order: JSON.stringify(trial_conditions),
+  });
+
+
+  //-------------------------------- run task
+
+  jsPsych.init({
+    timeline: timeline,
+    preload_images: ["img/neg.png", "img/neu.png", "img/spaceship_transparent.png", "img/star.png", "img/earth.png", "img/planet.png", "img/small_rocket.png", "img/webcam.png"],
+    display_element: 'jspsych-target',
+    on_interaction_data_update: function(data) {
+      data.screen_width = document.documentElement.clientWidth
+      data.screen_height = document.documentElement.clientHeight
+      console.log(JSON.stringify(data))
+      interactions.push(data)
+    },
+    on_trial_finish: function() {
+      window.scrollTo(0, 0);
+      saveData(task_name + "_" + id + "_" + jsPsych.startTime() + ".csv", jsPsych.data.get().csv());
+      synth.cancel(); // after every trial, cancel the speech and pause any audio that's playing
+      if(audio) {audio.pause()};
+      jsPsych.data.addProperties({
+        interactions: JSON.stringify(interactions),
+        start_time: jsPsych.startTime()
+      });
+    },
+    on_finish: function() {
+      console.log("finished");
+      document.body.style.overflow = "scroll"; // enable scrolling again
+      document.getElementById("jspsych-content").innerHTML = [
+          "<div style='font-family: Montserrat; font-size: 15vh; line-height: 1; font-weight: 800; text-align: right; color: #ee7d33; position: fixed; top: 50%; left: 100%; transform: translate(-110%, -50%);'>THANK YOU</div>"+
+          "<div style='width: 80%; font-family: Montserrat; font-size: 5vh; line-height: 1; text-align: right; color: white; position: fixed; top: 70%; left: 100%; transform: translate(-110%, -50%);'>You may now close this window</div>",
+          "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>OOPS!</div><div>This study is now complete, please get in touch with the researcher if you would like to participate in our future studies.</div>",
+          "<div style='font-family: Montserrat; font-size: 8vh; line-height: 1; font-weight: 800; color: #ee7d33;'>OOPS!</div><div style='color:white'>This game requires permission to use the webcam and microphone. There was a problem accessing the webcam or microphone. Is it in use by another programme?<br><br>If you may have blocked the webcam and microphone by mistake, you can change the permissions for this site by clicking the little camera with a red 'x' in the address bar at the top of the browser window, then refresh the page.<br><br>If you are still having difficulties, please contact the researcher for assistance.</div>",
+          '<h1 style="colour: #ee7d33;">MORE QUESTIONS</h1><div style="color: white;">Please send an email to Zoe Ryan (the researcher) on <a href="mailto:z.j.ryan@pgr.reading.ac.uk">z.j.ryan@pgr.reading.ac.uk</a>. She will answer your questions and send you a new link to try the game again later.<br><br>No video data have been saved.</div>',
+          '<h1 style="colour: #ee7d33;">SOUND ERROR</h1><div style="color: white;">Oops, it looks like there is something wrong with the sound. Please send an email to Zoe Ryan (the researcher) on <a href="mailto:z.j.ryan@pgr.reading.ac.uk">z.j.ryan@pgr.reading.ac.uk</a>. She will send you a new link to try the game again later.<br><br>No video data have been saved.</div>',
+          debrief.preamble // show the debrief if consent is withdrawn
+        ][error_code] }
+  });
+
+</script>
+
+</html>
