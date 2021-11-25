@@ -7,7 +7,7 @@ var likert_scale = [
 
 var trial = {
   type: "survey-likert",
-  preamble: "<h1>SURVEY TITLE GOES HERE</h1><div>Survey preamble text goes here</div>",
+  preamble: "<h1>ID-EC</h1><div>Please report how you generally feel regarding each statement below on the following 4-point frequency scale</div>",
   questions: [
     {prompt: "Enjoy exploring new ideas", labels: likert_scale, required: true},
     {prompt: "Hours on a problem because I can’t rest without answer", labels: likert_scale, required: true},
