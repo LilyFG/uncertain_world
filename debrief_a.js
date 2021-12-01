@@ -1,6 +1,6 @@
 var debrief = {
   type: "survey-text",
-  preamble: "<h1 style='color: #ee7d33'>Parent debrief </h1>"+
+  preamble: "<h1 style='color: #ee7d33'>Debrief </h1>"+
     "<div id='debrief' style='text-align: left; color: white;'>"+
     "Thank you for taking the time to complete the questionnaires, and for taking part in the computer games today. We hope that you enjoyed the experience. "+
     "<br><br>"+
@@ -17,29 +17,24 @@ var debrief = {
     "<a href = 'https://www.nhs.uk/mental-health/talking-therapies-medicine-treatments/talking-therapies-and-counselling/nhs-talking-therapies/'>https://www.nhs.uk/mental-health/talking-therapies-medicine-treatments/talking-therapies-and-counselling/nhs-talking-therapies/</a>"+
     "<br><br>"+
     "Thank you again for your time today. Do let us know if you have any questions, comments or feedback. "+
-    "You can download a copy of this page by clicking <a href='debrief_a.pdf' download='uncertain world debrief'>here</a>. We will also send you a copy by email with a"+
-    " giftcard as a contribution to your reasonable expenses incurred in taking part in the research and your child's certificate."+
+    "You can download a copy of this page by clicking <a href='debrief_a.pdf' download='uncertain world debrief'>here</a>."+
     "<br><br>"+
+    "<h1 style='color: #ee7d33'>Debrief Questions</h1>"+
+    "Please answer the two debrief questions below. <b>These must be answered</b> in order to gain your SONA credits: "+
     "</div>",
     questions: [
-    {prompt: "",
-                  // value: "Will we be looking at individual or group scores for the game?", // used placeholder instead so it overwrites
+    {prompt: "<p style='color:white;'>1. Will we be looking at individual or group scores for the game?</p>",
                   rows: 10,
                   columns: 60},
-    {prompt: "",
-                  // value: "Are we investigating intolerance of uncertainty, curiosity or both?", // used placeholder instead so it overwrites
+    {prompt: "<p style='color:white;'>2. Are we investigating intolerance of uncertainty, curiosity or both?</p>",
                   rows: 10,
                   columns: 60},
-    {prompt: "",
-                  // value: "Please enter any questions, comments, or feedback here", // used placeholder instead so it overwrites
+    {prompt: "<p style='color:white;'>Please enter any questions, comments, or feedback here</p>",
                   rows: 10,
                   columns: 60}],
     on_start: function(){
       document.body.style.overflow = "scroll"
       document.getElementById("jspsych-content").style.paddingBottom = "5vh"
-    },
-    on_load: function(){
-      document.getElementsByName("#jspsych-survey-text-response-0")[0].placeholder = "Please enter any questions, comments, or feedback here"
     },
     on_finish: function(data){
       var query = JSON.parse(data.responses)["Q2"]

@@ -1,10 +1,10 @@
 /*
  * Plugin for loading and animating jars trial
  */
- 
+
 jsPsych.plugins["PAL"] = (function() {
 	var plugin = {};
-	
+
   plugin.info = {
     name: "PAL",
     parameters: {
@@ -15,7 +15,7 @@ jsPsych.plugins["PAL"] = (function() {
     }
   }
 
-  
+
   jsPsych.pluginAPI.registerPreload('snap', 'stimulus', 'image');
 
   plugin.trial = function(display_element, trial) {
@@ -26,7 +26,7 @@ jsPsych.plugins["PAL"] = (function() {
 	//display_element.append($("<div style = 'padding-top:50px;'><center><svg id='jspsych-snap-canvas' width=" + 900 + " height=" + 900 + " x = 300></svg></center></div>"));
 	//paper = Snap("#jspsych-snap-canvas");
 	console.log(trial.n)
-	
+
 	display_element.innerHTML = "<svg id='jspsych-snap-canvas' width=" + 900 + " height=" + 900 + "></svg>";
     var paper = Snap("#jspsych-snap-canvas");
 
@@ -35,21 +35,21 @@ jsPsych.plugins["PAL"] = (function() {
         angle = 0, step = (2*Math.PI) / trial.n;
 	var cx = radius + 50, cy = radius + 10
 
-	
+
 	var foods = ['ice cream', 'cheese', 'carrots', 'cake', 'pizza', 'watermelon', 'apples', 'eggs']
 	var foods = foods.slice(0,trial.n)
 	console.log(foods)
 	var foods1 = foods.slice(0)
 	var aliens = Array.apply(null, Array(trial.n[0])).map(function (_, i) {return i;})
-	
+
 	var alien = new Object()
 	var clicked = false
 	var learn = true
 	var learn_clicks = []
 	var test_clicks = []
 	var learn_n = 0
-	
-	
+
+
 	var clickFunction = function(){
 		if(learn){
 			if(!clicked){
@@ -97,9 +97,9 @@ jsPsych.plugins["PAL"] = (function() {
 		}
 
 	}
-	
+
 	function draw_aliens (aliens, angle){
-		for(i=0;i<trial.n;i++) {	
+		for(i=0;i<trial.n;i++) {
 			j = aliens[i]
 			var x = Math.round(width/2 + radius * Math.cos(angle) - width/2);
 			var y = Math.round(height/2 + radius * Math.sin(angle) - height/2);
@@ -109,7 +109,7 @@ jsPsych.plugins["PAL"] = (function() {
 			angle += step;
 		};
 	}
-	
+
 	function shuffle (array) {
 	  var i = 0
 		, j = 0
@@ -123,7 +123,7 @@ jsPsych.plugins["PAL"] = (function() {
 	  }
 	  return array
 	}
-	
+
 	function draw_test_button () {
 		r = paper.rect(750,750,150,100,5,5).attr({fill:"#94EBE2", stroke:"#00000", strokeWidth:2})
 		t = paper.text(780,800, "test me")
@@ -135,12 +135,12 @@ jsPsych.plugins["PAL"] = (function() {
 				food = paper.image("img/"+foods[tested]+".png",cx,cy,width,height)
 		})
 	}
-	
+
 draw_aliens(aliens, angle)
 draw_test_button()
 
 
-	
+
 };
   return plugin;
 })();

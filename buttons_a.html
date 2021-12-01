@@ -16,8 +16,6 @@
   <script src="plugins/jspsych-survey-text.js"></script>
   <script src="plugins/jspsych-fullscreen.js"></script>
   <script src="debrief_a.js"></script>
-  <script src="IUS.js"></script>
-  <script src="IDscale.js"></script>
 
   <!-- RecordRTC online files -->
   <script src="https://www.webrtc-experiment.com/RecordRTC.js"></script>
@@ -395,7 +393,7 @@
     type: "html-button-response",
     stimulus: "<div style='font-family: Montserrat; font-size: 10vh; line-height: 1; font-weight: 800; text-align: center; color: #ee7d33; margin-top: 3vh;'>TASK INFORMATION</div>"+
       "<div style='padding: 5%; font-family: Montserrat; font-size: 4vh; line-height: 1.1; text-align: left; color: white;'><p>Thank you for setting up the game. There will be a short set "+
-      "of instructions to watch.</p><p>Once they have finished the game, we will ask "+
+      "of instructions to watch.</p><p>Once you have finished the game, we will ask "+
       "you to upload the video if you are happy. </p></div>",
     choices: ['START'],
     button_html: btn,
@@ -1387,8 +1385,8 @@
     on_finish: function(data) {
       var videos_uploaded = 0 // counter for successful uploads
       jsPsych.pauseExperiment()
-      document.getElementById("jspsych-content").innerHTML="<div style='color: white; font-family: Montserrat;'>Please wait while the videos upload."+
-      "This upload can take a minute or two. Please do not click away from this screen until the upload has completed and you have gone through to our debrief screen.</div>"+
+      document.getElementById("jspsych-content").innerHTML="<div style='color: white; font-family: Montserrat;'>Please wait while the videos upload. "+
+      "This upload can take a minute or two. Please do not click away from this screen until the upload has completed and you have gone through to our debrief screen where you can complete the debrief questions to receive your SONA credits.</div>"+
       "<img id='jspsych-loading-img' src='img/small_rocket.png' style = 'position: absolute; left: 0%; top: 80%; height: 10%'>"
       $( document ).ajaxSuccess(function( event, request, settings ) {
         videos_uploaded++
@@ -1407,6 +1405,8 @@
           uploadBlob(videoStorage[i].file,
             task_name + "_" + id + "_" + videoStorage[i].name + "_consent_" + ["research", "education", "public", "WITHDRAWN"][consent_level])
         }
+      }else{
+        jsPsych.resumeExperiment()
       }
 
       jsPsych.data.addProperties({
@@ -1569,7 +1569,7 @@
 
 
   // the main task timeline
-  var timeline = [check_id, accept_camera, soundcheck_loop, info, fullscreen_on, start_screen, instr, start_screen_2, trial_loop, ratings_start, rate_sounds, thank_you, upload_videos, debrief]
+  var timeline = [accept_camera, soundcheck_loop, info, fullscreen_on, start_screen, instr, start_screen_2, trial_loop, ratings_start, rate_sounds, thank_you, upload_videos, debrief]
 
   // some switching logic to make it easy to go to different bits of the task using a URL variable
   switch (jsPsych.data.getURLVariable('goto')) {
@@ -1623,7 +1623,8 @@
       if(audio) {audio.pause()};
       jsPsych.data.addProperties({
         interactions: JSON.stringify(interactions),
-        start_time: jsPsych.startTime()
+        start_time: jsPsych.startTime(),
+        id: id
       });
     },
     on_finish: function() {

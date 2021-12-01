@@ -2,7 +2,7 @@ var vo_txt = {
 	// start window (handover to child)
   start: "Welcome to the game. You will be going on a trip into outer space. Press the start button to begin.",
   // start window (handover to child)
-  start_2: "You've completed the instructions. Press the start button to begin.",
+  start_2: "You have now been through the instructions for the game. Press the start button to begin.",
   // explain webcam
   webcam: "The computer webcam will record your face while you are playing the game.",
   // in practice when the child can see their face in the spaceship window (used to be a spaceman's helmet!)
@@ -75,5 +75,5 @@ var vo_txt = {
   rate_sounds: "Now you will hear all the sounds again and "+
     "we want you to tell us how they make you feel using the images of the person",
   // end of the task
-  thank_you: "Thank you for playing the Uncertain World game!"
+  thank_you: "Thank you for playing the Uncertain World game! Please press next to upload the videos and complete the debrief."
 }

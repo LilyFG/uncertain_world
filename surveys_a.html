@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="UTF-8">
+<html>
+<head>
+  <title>Buttons</title>
+  <script src="js/jquery.min.js"></script>
+  <!-- Make sure that these paths direct to the files correctly -->
+  <script src="js/jspsych.js"></script>
+  <script src="plugins/jspsych-instructions.js"></script>
+  <script src="plugins/jspsych-survey-likert.js"></script>
+  <script src="plugins/jspsych-survey-multi-select.js"></script>
+  <script src="plugins/jspsych-survey-html-form.js"></script>
+
+
+  <script src="IUS.js"></script>
+  <script src="ID_EC.js"></script>
+  <script src="demo.js"></script>
+  <script src="consent.js"></script>
+  <script src="info_sheet.js"></script>
+
+
+  <link rel="stylesheet" href="css/jspsych.css"></link>
+  <link rel="stylesheet" href="css/jquery-ui.css"></link>
+
+</head>
+
+<body style="min-height: 100vh;">
+  <div id="jspsych-target" style="min-height: 100vh; width: 100%; margin: 0;"></div>
+</body>
+
+<script>
+
+var task_name = "uw_surveys";
+console.log(task_name);
+
+
+if (jsPsych.data.getURLVariable('pid')=="test") {
+  var id = "debug_" + jsPsych.randomization.randomID(5)
+  var debug = true;
+} else if (jsPsych.data.getURLVariable('pid')) {
+  var id = jsPsych.data.getURLVariable('pid');
+} else {
+  alert("Oops, we don't have an id for you. Please check that you have copied the link correctly and try again.")
+}
+
+function saveData(filename, filedata) {
+  $.ajax({
+    type: 'post',
+    cache: false,
+    url: 'save_data.php', // this is the path to the above PHP script (needs to be in the same foler as the script)
+    data: {
+      filename: filename,
+      filedata: filedata
+    }
+  });
+}
+
+var thanks = {
+  type: "instructions",
+  pages: ["Thank you for finishing the survey part of the study.<br>Please press next to continue to the task.<br>This may take a little while to load, so please be patient."],
+  show_clickable_nav: true
+}
+
+jsPsych.init({
+  timeline: [info_sheet, consent, demo, ID_EC_survey, IUS_survey, thanks],
+  display_element: 'jspsych-target',
+  on_trial_finish: function() {
+    window.scrollTo(0, 0);
+    saveData(task_name + "_" + id + "_" + jsPsych.startTime() + ".csv", jsPsych.data.get().csv());
+    jsPsych.data.addProperties({
+      start_time: jsPsych.startTime(),
+      id: id
+    });
+  },
+  on_finish: function() {
+    window.location.href = "buttons_a.html?pid="+id;
+  }
+})
+</script>
+</html>

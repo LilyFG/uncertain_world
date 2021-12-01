@@ -84,7 +84,7 @@ jsPsych.plugins['survey-text'] = (function() {
     if (typeof trial.questions[0].value == 'undefined') {
       trial.questions[0].value = [];
       for (var i = 0; i < trial.questions.length; i++) {
-        trial.questions[i].value.push("");
+        trial.questions[i].value = "";
       }
     }
 
