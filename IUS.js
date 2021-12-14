@@ -8,7 +8,7 @@ var likert_scale_IUS = [
 
 var IUS_survey = {
   type: "survey-likert",
-   preamble: "<h1>IUS</h1><div>You will find below a series of statements which describe how people may react to the uncertainties of life. Please use the scale below to describe to what extent each item is characteristic of you. scale</div>",
+   preamble: "<h1>IUS</h1><div>You will find below a series of statements which describe how people may react to the uncertainties of life. Please use the scale below to describe to what extent each item is characteristic of you.</div>",
   questions: [
     {prompt: "Uncertainty stops me from having a firm opinion.", labels: likert_scale_IUS, required: true},
     {prompt: " Being uncertain means that a person is disorganized.", labels: likert_scale_IUS, required: true},
