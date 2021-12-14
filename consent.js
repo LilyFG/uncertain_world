@@ -10,7 +10,7 @@ var consent = {
   '<div style="text-align: left; width:80%; margin:auto;">'+
   '<div style="">'+
     '<input type="checkbox" id="consent1" name="consent1" required>'+
-      '<label for="consent1"> I agree to participate in this study being conducted by Zoe Ryan, Dr Jayne Morriss, Professor Helen Dodd and Dr Lily Fitzgibbon at The University of Reading.</label><br><br>'+
+      '<label for="consent1"> I agree to participate in this study being conducted by Zoe Ryan, Dr Jayne Morriss, Professor Helen Dodd and Dr Lily Fitzgibbon at the University of Reading.</label><br><br>'+
     '<input type="checkbox" id="consent2" name="consent2" required>'+
       '<label for="consent2"> I have seen and read a copy of the Information Sheet and have been given the opportunity to ask questions about the study and these have been answered to my satisfaction.  </label><br><br>'+
     '<input type="checkbox" id="consent3" name="consent3" required>'+
