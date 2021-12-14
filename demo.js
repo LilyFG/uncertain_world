@@ -9,7 +9,7 @@ var demo = {
 '      </div><br>'+
 '      <div class="form-group">'+
 '        <label class="col-form-label" for="number" id="number-label">What is your age?</label><br>'+
-'        <input class="form-control" id="number" name="age" max="80" min="18" type="number" />'+
+'        <input class="form-control" id="number" name="age" max="100" min="18" type="number" />'+
 '      </div><br>'+
 '      <div class="form-group">'+
 '        <label class="col-form-label" for="gender" id="gender-label">What is your gender?</label><br>'+
