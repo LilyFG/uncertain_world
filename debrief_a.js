@@ -1,5 +1,5 @@
 var debrief = {
-  type: "survey-text",
+  type: "survey-html-form",
   preamble: "<h1 style='color: #ee7d33'>Debrief </h1>"+
     "<div id='debrief' style='text-align: left; color: white;'>"+
     "Thank you for taking the time to complete the questionnaires, and for taking part in the computer games today. We hope that you enjoyed the experience. "+
@@ -22,31 +22,16 @@ var debrief = {
     "<h1 style='color: #ee7d33'>Debrief Questions</h1>"+
     "Please answer the two debrief questions below. <b>These must be answered</b> in order to gain your SONA credits: "+
     "</div>",
-    questions: [
-    {prompt: "<p style='color:white;'>1. Will we be looking at individual or group scores for the game?</p>",
-                  rows: 10,
-                  columns: 60},
-    {prompt: "<p style='color:white;'>2. Are we investigating intolerance of uncertainty, curiosity or both?</p>",
-                  rows: 10,
-                  columns: 60},
-    {prompt: "<p style='color:white;'>Please enter any questions, comments, or feedback here</p>",
-                  rows: 10,
-                  columns: 60}],
+    html: 
+    "<p style='color:white;'>1. Will we be looking at individual or group scores for the game?</p>"+
+    "<textarea name='#Q0' rows=10, cols=60 required></textarea>"+
+    "<p style='color:white;'>2. Are we investigating intolerance of uncertainty, curiosity or both?</p>"+
+    "<textarea name='#Q1' rows=10, cols=60 required></textarea>"+
+    "<p style='color:white;'>Please enter any questions, comments, or feedback here</p>"+
+        "<textarea name='#Q2' rows=10, cols=60></textarea><br>",
     on_start: function(){
       document.body.style.overflow = "scroll"
       document.getElementById("jspsych-content").style.paddingBottom = "5vh"
-    },
-    on_finish: function(data){
-      var query = JSON.parse(data.responses)["Q2"]
-      $.ajax({
-        type: 'post',
-        cache: false,
-        url: 'email_query.php', // this is the path to the above PHP script (needs to be in the same folder as the script)
-        data: {
-          filedata: query,
-          filename: "debrief_"+id+".txt"
-        }
-      });
     },
     button_label: "Submit"
 }
