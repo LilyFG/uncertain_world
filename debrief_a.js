@@ -2,6 +2,8 @@ var debrief = {
   type: "survey-html-form",
   preamble: "<h1 style='color: #ee7d33'>Debrief </h1>"+
     "<div id='debrief' style='text-align: left; color: white;'>"+
+    "<b>You will need to answer the two debrief questions at the bottom of this screen to get your SONA credits.</b>"+
+    "<br><br>"+
     "Thank you for taking the time to complete the questionnaires, and for taking part in the computer games today. We hope that you enjoyed the experience. "+
     "<br><br>"+
     "Here is a bit more information about what you did today and why we are interested in these things. Please let us know if you have any questions, either by emailing z.j.ryan@pgr.reading.ac.uk or by leaving a question in the free text box at the end of this debrief. "+
