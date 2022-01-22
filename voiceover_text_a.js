@@ -75,5 +75,5 @@ var vo_txt = {
   rate_sounds: "Now you will hear all the sounds again and "+
     "we want you to tell us how they make you feel using the images of the person",
   // end of the task
-  thank_you: "Thank you for playing the Uncertain World game! Please press next to upload the videos and complete the debrief."
+  thank_you: "Thank you for playing the Uncertain World game! Please press next to upload the videos. You will then need to complete the debrief questions for credit."
 }
